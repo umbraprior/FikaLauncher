@@ -1,0 +1,118 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:FikaLauncher.ViewModels"
+             xmlns:views="clr-namespace:FikaLauncher.Views"
+             xmlns:material="using:Material.Icons.Avalonia"
+             xmlns:l="using:Jeek.Avalonia.Localization"
+             xmlns:dialogHost="clr-namespace:DialogHostAvalonia;assembly=DialogHost.Avalonia"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="FikaLauncher.Views.MainView"
+             x:DataType="vm:MainViewModel"
+             RenderOptions.BitmapInterpolationMode="HighQuality">
+  <Design.DataContext>
+    <vm:MainViewModel />
+  </Design.DataContext>
+<dialogHost:DialogHost Identifier="RootDialog">
+  <Grid>
+    <SplitView IsPaneOpen="{Binding IsPaneOpen}"
+               DisplayMode="CompactOverlay"
+               OpenPaneLength="250"
+               CompactPaneLength="75"
+               UseLightDismissOverlayMode="True"
+               PaneClosing="SplitView_PaneClosing">
+      <SplitView.Pane>
+        <Grid RowDefinitions="Auto,*,Auto">
+          <StackPanel Grid.Row="0" Spacing="10" HorizontalAlignment="Stretch" Margin="5">
+            <Button FontSize="20" Command="{Binding TogglePaneCommand}"
+                    HorizontalAlignment="Right" Background="Transparent" Padding="10"
+                    IsVisible="{Binding IsPaneNotOpen}"
+                    Classes="Tertiary">
+              <material:MaterialIcon Kind="MenuClose" Width="24" Height="24"/>
+            </Button>
+            <Button FontSize="20" Command="{Binding TogglePaneCommand}"
+                    HorizontalAlignment="Right" Background="Transparent" Padding="10"
+                    IsVisible="{Binding IsPaneOpen}" Classes="Tertiary">
+              <material:MaterialIcon Kind="MenuOpen" Width="24" Height="24"/>
+            </Button>
+            <StackPanel HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+              <Image Source="{Binding LogoImage}" Width="{Binding LogoWidth}" Height="{Binding LogoHeight}" />
+            </StackPanel>
+          </StackPanel>
+          <StackPanel Grid.Row="1" Spacing="10" Margin="10" HorizontalAlignment="Center">
+            <Button Command="{Binding NavigatePlayCommand}" 
+                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="15" Background="Transparent">
+              <StackPanel Orientation="Horizontal" Spacing="10">
+                <material:MaterialIcon Kind="PlayCircle" VerticalAlignment="Center" Width="24" Height="24"/>
+                <TextBlock Text="{l:Localize Play}" VerticalAlignment="Center" IsVisible="{Binding IsPaneOpen}"
+                           FontStyle="Normal" FontWeight="Bold"/>
+              </StackPanel>
+            </Button>
+            <Button Command="{Binding NavigateInstallCommand}"
+                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="15" Background="Transparent">
+              <StackPanel Orientation="Horizontal" Spacing="10">
+                <material:MaterialIcon Kind="DownloadMultiple" VerticalAlignment="Center" Width="24" Height="24"/>
+                <TextBlock Text="{l:Localize Install}" VerticalAlignment="Center" IsVisible="{Binding IsPaneOpen}" 
+                           FontStyle="Normal" FontWeight="Bold"/>
+              </StackPanel>
+            </Button>
+            <Button IsEnabled="False"
+                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="15" Background="Transparent">
+              <StackPanel Orientation="Horizontal" Spacing="10">
+                <material:MaterialIcon Kind="Puzzle" VerticalAlignment="Center" Width="24" Height="24"/>
+                <TextBlock Text="{l:Localize Mods}" VerticalAlignment="Center" IsVisible="{Binding IsPaneOpen}" 
+                           FontStyle="Normal" FontWeight="Bold"/>
+              </StackPanel>
+            </Button>
+            <Button Command="{Binding NavigateSettingsCommand}" IsVisible="{Binding IsPaneOpen}"
+                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="15" Background="Transparent">
+              <StackPanel Orientation="Horizontal" Spacing="10">
+                <material:MaterialIcon Kind="Cog" VerticalAlignment="Center" Width="24" Height="24"/>
+                <TextBlock Text="{l:Localize Settings}" VerticalAlignment="Center" IsVisible="{Binding IsPaneOpen}" 
+                           FontStyle="Normal" FontWeight="Bold"/>
+              </StackPanel>
+            </Button>
+          </StackPanel>
+          <StackPanel Grid.Row="2" Spacing="10" Margin="10" HorizontalAlignment="Center">
+            <Button Command="{Binding NavigateAboutCommand}" IsVisible="{Binding IsPaneOpen}"
+                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="15"
+                    Background="Transparent" Classes="Secondary">
+              <StackPanel Orientation="Horizontal" Spacing="10">
+                <material:MaterialIcon Kind="BookInformationVariant" VerticalAlignment="Center" Width="24" Height="24"/>
+                <TextBlock Text="{l:Localize About}" VerticalAlignment="Center" IsVisible="{Binding IsPaneOpen}" 
+                           FontStyle="Normal" FontWeight="Bold"/>
+              </StackPanel>
+            </Button>
+            <TextBlock Text="FikaLauncher v1.0" HorizontalAlignment="Center" 
+                       Margin="0,10" IsVisible="{Binding IsPaneOpen}"
+                       FontSize="10" Classes="Quaternary"/>
+          <TextBlock Text="v1.0" HorizontalAlignment="Center" 
+                     Margin="0,10" IsVisible="{Binding IsPaneNotOpen}"
+                     FontSize="10" Classes="Quaternary"/>
+          </StackPanel>
+        </Grid>
+      </SplitView.Pane>
+
+      <Grid>
+        <ContentControl Content="{Binding CurrentPage}">
+          <ContentControl.DataTemplates>
+            <DataTemplate DataType="{x:Type vm:PlayViewModel}">
+              <views:PlayView />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:InstallViewModel}">
+              <views:InstallView />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
+              <views:SettingsView />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:AboutViewModel}">
+              <views:AboutView />
+            </DataTemplate>
+          </ContentControl.DataTemplates>
+        </ContentControl>
+      </Grid>
+    </SplitView>
+  </Grid>
+</dialogHost:DialogHost>
+</UserControl>

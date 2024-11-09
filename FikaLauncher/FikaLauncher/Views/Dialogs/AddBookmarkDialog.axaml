@@ -1,0 +1,53 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:FikaLauncher.ViewModels.Dialogs"
+             xmlns:l="using:Jeek.Avalonia.Localization"
+             xmlns:material="using:Material.Icons.Avalonia"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="400"
+             x:Class="FikaLauncher.Views.Dialogs.AddBookmarkDialog"
+             x:DataType="vm:AddBookmarkDialogViewModel">
+    
+    <Grid RowDefinitions="Auto,*,Auto" Width="400" MinHeight="300">
+        <TextBlock Grid.Row="0" 
+                   Text="{l:Localize AddBookmarkTitle}" 
+                   Classes="H5" 
+                   Margin="20"/>
+        
+        <StackPanel Grid.Row="1" Spacing="15" Margin="20,0,20,20">
+            <StackPanel Spacing="5">
+                <TextBlock Text="{l:Localize ServerAddress}" Classes="Caption"/>
+                <TextBox Text="{Binding ServerAddress}" IsReadOnly="True"/>
+            </StackPanel>
+            
+            <StackPanel Spacing="5">
+                <TextBlock Text="{l:Localize ServerPort}" Classes="Caption"/>
+                <TextBox Text="{Binding ServerPort}" IsReadOnly="True"/>
+            </StackPanel>
+            
+            <StackPanel Spacing="5">
+                <TextBlock Text="{l:Localize BookmarkName}" Classes="Caption"/>
+                <TextBox Text="{Binding BookmarkName}" 
+                         Watermark="{l:Localize BookmarkNamePlaceholder}">
+                    <TextBox.KeyBindings>
+                        <KeyBinding Gesture="Enter"
+                                    Command="{Binding SaveCommand}"/>
+                    </TextBox.KeyBindings>
+                </TextBox>
+            </StackPanel>
+        </StackPanel>
+        
+        <StackPanel Grid.Row="2" 
+                    Orientation="Horizontal" 
+                    HorizontalAlignment="Right" 
+                    Spacing="10" 
+                    Margin="20">
+            <Button Command="{Binding CancelCommand}" 
+                    Content="{l:Localize Cancel}"/>
+            <Button Command="{Binding SaveCommand}" 
+                    Classes="Primary"
+                    Content="{l:Localize Save}"/>
+        </StackPanel>
+    </Grid>
+</UserControl>

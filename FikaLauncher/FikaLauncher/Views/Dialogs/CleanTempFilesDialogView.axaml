@@ -1,0 +1,23 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:FikaLauncher.ViewModels.Dialogs"
+             xmlns:l="using:Jeek.Avalonia.Localization"
+             mc:Ignorable="d" d:DesignWidth="300" d:DesignHeight="200"
+             x:Class="FikaLauncher.Views.Dialogs.CleanTempFilesDialogView"
+             x:DataType="vm:CleanTempFilesDialogViewModel">
+    
+    <StackPanel Spacing="20" Width="300">
+    <TextBlock Text="{l:Localize Warning}" FontWeight="Bold" HorizontalAlignment="Center" Classes="Warning"/>
+    <TextBlock Text="{l:Localize TempWarn}"
+               TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center"/>
+    <TextBlock Text="{l:Localize SureProceed}"
+               TextWrapping="Wrap" HorizontalAlignment="Center"/>
+    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="20">
+      <Button Content="{l:Localize Cancel}" Command="{Binding CancelCommand}" Classes="Danger"/>
+      <Button Content="{l:Localize Proceed}" Command="{Binding ProceedCommand}" Classes="Success"/>
+    </StackPanel>
+  </StackPanel>
+</UserControl>
+

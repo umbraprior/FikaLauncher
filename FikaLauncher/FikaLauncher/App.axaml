@@ -1,0 +1,24 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:FikaLauncher"
+             xmlns:semi="https://irihi.tech/semi"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:dialogHost="clr-namespace:DialogHostAvalonia;assembly=DialogHost.Avalonia"
+             x:Class="FikaLauncher.App"
+             RequestedThemeVariant="Dark">
+             <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
+
+    <Application.DataTemplates>
+        <local:ViewLocator/>
+    </Application.DataTemplates>
+
+    <Application.Styles>
+        <semi:SemiTheme Locale="en-US" />
+        <materialIcons:MaterialIconStyles />
+        <dialogHost:DialogHostStyles />
+        
+        <Style Selector="dialogHost|DialogHost">
+            <Setter Property="Background" Value="{DynamicResource SemiBackground1Color}" />
+        </Style>
+    </Application.Styles>
+</Application>
