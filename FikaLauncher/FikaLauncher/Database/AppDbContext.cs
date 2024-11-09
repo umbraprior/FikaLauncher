@@ -21,7 +21,6 @@ public class AppDbContext : DbContext
         var dbPath = Path.Combine(dbFolder, "users.db");
         optionsBuilder.UseSqlite($"Data Source={dbPath}");
         
-        // Suppress the pending model changes warning
         optionsBuilder.ConfigureWarnings(warnings => 
             warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
     }
@@ -34,7 +33,6 @@ public class AppDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.HasIndex(e => e.Username).IsUnique();
             
-            // Configure one-to-many relationship with ServerBookmarks
             entity.HasMany(e => e.ServerBookmarks)
                   .WithOne(e => e.User)
                   .HasForeignKey(e => e.UserId)
@@ -46,10 +44,8 @@ public class AppDbContext : DbContext
             entity.ToTable("ServerBookmarks");
             entity.HasKey(e => e.Id);
             
-            // Create an index on UserId for faster lookups
             entity.HasIndex(e => e.UserId);
             
-            // Create a unique index on the combination of UserId, ServerAddress, and ServerPort
             entity.HasIndex(e => new { e.UserId, e.ServerAddress, e.ServerPort }).IsUnique();
         });
     }

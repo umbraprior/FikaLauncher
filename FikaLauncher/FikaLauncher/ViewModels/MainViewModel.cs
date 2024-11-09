@@ -24,7 +24,7 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty] private double _logoWidth = 60;
     [ObservableProperty] private double _logoHeight = 60;
     [ObservableProperty]
-    private int _closeAction = 0; // 0 for minimize to tray, 1 for exit
+    private int _closeAction = 0;
 
     partial void OnLogoSourceChanged(string value)
     {

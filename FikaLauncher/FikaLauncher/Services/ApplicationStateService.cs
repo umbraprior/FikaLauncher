@@ -28,6 +28,8 @@ public static class ApplicationStateService
         public string? SecurityToken { get; set; }
         public string LastServerAddress { get; set; } = "127.0.0.1";
         public string LastServerPort { get; set; } = "6969";
+        public bool HasAcceptedLauncherTerms { get; set; }
+        public bool HasAcceptedFikaTerms { get; set; }
     }
 
     public static (string prefix, string suffix) GetOrUpdateGreeting(string username)
@@ -39,7 +41,6 @@ public static class ApplicationStateService
         
         if (Random.Shared.NextDouble() < 0.3)
         {
-            // Time-based greeting (30% chance)
             if (hour >= 5 && hour < 12)
                 greeting = "GoodMorning";
             else if (hour >= 12 && hour < 17)
@@ -49,16 +50,13 @@ public static class ApplicationStateService
         }
         else
         {
-            // Get all available greetings from the Localizer
             var validGreetings = new List<string>();
             
-            // We know we have at least 18 greetings from the language file
             for (int i = 1; i <= 18; i++)
             {
                 string key = $"RandomGreeting{i}";
                 string value = Localizer.Get(key);
                 
-                // Only add if we got a real translation (not the key itself)
                 if (value != key)
                 {
                     validGreetings.Add(key);
@@ -67,12 +65,10 @@ public static class ApplicationStateService
 
             if (validGreetings.Count > 0)
             {
-                // Pick a random greeting from the valid ones
                 greeting = validGreetings[Random.Shared.Next(validGreetings.Count)];
             }
             else
             {
-                // Fallback to time-based greeting if no random greetings found
                 if (hour >= 5 && hour < 12)
                     greeting = "GoodMorning";
                 else if (hour >= 12 && hour < 17)
@@ -92,11 +88,10 @@ public static class ApplicationStateService
         return (parts[0], parts.Length > 1 ? parts[1] : string.Empty);
     }
 
-    private static void LoadState()
+    public static void LoadState()
     {
         try
         {
-            // Ensure cache directory exists
             Directory.CreateDirectory(FileSystemService.CacheDirectory);
             
             if (File.Exists(StateFilePath))
@@ -116,7 +111,6 @@ public static class ApplicationStateService
     {
         try
         {
-            // Ensure cache directory exists
             Directory.CreateDirectory(FileSystemService.CacheDirectory);
             
             var json = JsonSerializer.Serialize(_currentState, _jsonOptions);
@@ -159,7 +153,6 @@ public static class ApplicationStateService
             }
         }
         
-        // If validation fails, clear the login state
         var lastUsername = _currentState.LastLoggedInUsername;
         ClearLoginState();
         _currentState.LastLoggedInUsername = lastUsername;
@@ -179,11 +172,15 @@ public static class ApplicationStateService
 
     public static void ClearLoginState()
     {
-        // Preserve the LastLoggedInUsername when clearing login state
         var lastUsername = _currentState.LastLoggedInUsername;
+        var hasAcceptedLauncherTerms = _currentState.HasAcceptedLauncherTerms;
+        var hasAcceptedFikaTerms = _currentState.HasAcceptedFikaTerms;
+        
         _currentState = new AppState
         {
-            LastLoggedInUsername = lastUsername
+            LastLoggedInUsername = lastUsername,
+            HasAcceptedLauncherTerms = hasAcceptedLauncherTerms,
+            HasAcceptedFikaTerms = hasAcceptedFikaTerms
         };
         SaveState();
     }

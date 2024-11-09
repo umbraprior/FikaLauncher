@@ -9,6 +9,9 @@ using FikaLauncher.Views;
 using FikaLauncher.Services;
 using Avalonia.Styling;
 using System;
+using System.Threading.Tasks;
+using FikaLauncher.ViewModels.Dialogs;
+using FikaLauncher.Views.Dialogs;
 
 namespace FikaLauncher;
 
@@ -21,7 +24,7 @@ public partial class App : Application
         AvaloniaXamlLoader.Load(this);
     }
 
-    public override void OnFrameworkInitializationCompleted()
+    public override async void OnFrameworkInitializationCompleted()
     {
         try
         {
@@ -37,6 +40,14 @@ public partial class App : Application
                 {
                     DataContext = new MainViewModel()
                 };
+
+                ApplicationStateService.LoadState();
+                var state = ApplicationStateService.GetCurrentState();
+                if (!state.HasAcceptedLauncherTerms || !state.HasAcceptedFikaTerms)
+                {
+                    await Task.Delay(500);
+                    await DialogService.ShowDialog<TermsDialogView>(new TermsDialogViewModel());
+                }
             }
             else if (ApplicationLifetime is ISingleViewApplicationLifetime singleViewPlatform)
             {

@@ -81,7 +81,6 @@ public partial class SettingsViewModel : ViewModelBase
         {
             _closeWindowOptions = value;
             OnPropertyChanged();
-            // Restore selection after updating options
             SelectedCloseWindowOption = CloseWindowBehavior;
         }
     }
@@ -93,14 +92,12 @@ public partial class SettingsViewModel : ViewModelBase
         {
             _launchGameOptions = value;
             OnPropertyChanged();
-            // Restore selection after updating options
             SelectedLaunchGameOption = LaunchGameBehavior;
         }
     }
 
     private void UpdateLocalizedOptions()
     {
-        // Store current selections
         var currentCloseOption = SelectedCloseWindowOption;
         var currentLaunchOption = SelectedLaunchGameOption;
 
@@ -116,7 +113,6 @@ public partial class SettingsViewModel : ViewModelBase
             GetLocalizedOption("MinimizeWindow")
         };
 
-        // Restore selections
         SelectedCloseWindowOption = currentCloseOption;
         SelectedLaunchGameOption = currentLaunchOption;
     }
@@ -220,7 +216,6 @@ public partial class SettingsViewModel : ViewModelBase
         ConfigurationService.Settings.IsDarkTheme = value;
         App.ChangeTheme(value);
         
-        // Update logo in MainViewModel
         if (App.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             if (desktop.MainWindow?.DataContext is MainViewModel mainViewModel)
@@ -269,7 +264,6 @@ public partial class SettingsViewModel : ViewModelBase
         
         if (AuthService.IsLoggedIn)
         {
-            // Get the current state to preserve the security token
             var currentState = ApplicationStateService.GetCurrentState();
             ApplicationStateService.SaveLoginState(
                 AuthService.CurrentUsername, 

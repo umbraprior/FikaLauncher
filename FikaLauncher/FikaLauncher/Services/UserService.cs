@@ -98,7 +98,6 @@ public static class UserService
             context.Users.Add(user);
             await context.SaveChangesAsync();
 
-            // Generate token after user is created
             var (tokenSuccess, token) = await DatabaseService.GenerateSecurityToken(username);
             if (!tokenSuccess || token == null)
             {
@@ -133,7 +132,6 @@ public static class UserService
             if (password != decryptedPassword)
                 return false;
 
-            // Sync the database and application state
             await DatabaseService.SyncUserState(username);
             return true;
         }

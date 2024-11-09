@@ -34,7 +34,6 @@ namespace FikaLauncher.Views
                 }
             }
             
-            // Clear selection after handling
             if (sender is ListBox listBox)
             {
                 listBox.SelectedItem = null;
@@ -74,7 +73,7 @@ namespace FikaLauncher.Views
                 grid.DataContext is ServerBookmarkEntity bookmark && 
                 bookmark.ShouldFocus)
             {
-                bookmark.ShouldFocus = false;  // Reset the flag
+                bookmark.ShouldFocus = false;
                 Dispatcher.UIThread.Post(() =>
                 {
                     var textBox = grid.FindDescendantOfType<TextBox>();
@@ -97,8 +96,40 @@ namespace FikaLauncher.Views
                 Dispatcher.UIThread.Post(() =>
                 {
                     textBox.Focus();
-                    textBox.CaretIndex = textBox.Text?.Length ?? 0; // Place caret at end
+                    textBox.CaretIndex = textBox.Text?.Length ?? 0;
                 }, DispatcherPriority.Render);
+            }
+        }
+
+        private void OnBookmarkFlyoutOpening(object? sender, EventArgs e)
+        {
+            if (DataContext is PlayViewModel viewModel)
+            {
+                viewModel.OnBookmarkFlyoutOpening();
+            }
+        }
+
+        private void OnBookmarkButtonLoaded(object? sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && DataContext is PlayViewModel viewModel)
+            {
+                viewModel.SetBookmarkButton(button);
+            }
+        }
+
+        private void OnFlyoutInteraction(object? sender, PointerEventArgs e)
+        {
+            if (DataContext is PlayViewModel viewModel)
+            {
+                viewModel.ResetFlyoutTimer();
+            }
+        }
+
+        private void OnFlyoutInteraction(object? sender, TextChangedEventArgs e)
+        {
+            if (DataContext is PlayViewModel viewModel)
+            {
+                viewModel.ResetFlyoutTimer();
             }
         }
 

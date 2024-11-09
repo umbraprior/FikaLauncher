@@ -30,11 +30,9 @@ public class LocalizationService : INotifyPropertyChanged
                 _currentLanguage = value;
                 Localizer.Language = value;
                 
-                // Force UI refresh for all bindings
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(Localizer.Languages));
                 
-                // Force ComboBox refresh
                 Dispatcher.UIThread.Post(() =>
                 {
                     if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)

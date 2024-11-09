@@ -78,7 +78,6 @@ public class ServerBookmarkEntity : INotifyPropertyChanged
     [NotMapped]
     public bool ShouldFocus { get; set; }
 
-    // Implement INotifyPropertyChanged
     public event PropertyChangedEventHandler? PropertyChanged;
 
     protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
@@ -86,7 +85,6 @@ public class ServerBookmarkEntity : INotifyPropertyChanged
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 
-    // Constructor to create from a combined address
     public static ServerBookmarkEntity FromFullAddress(string fullAddress, int userId, string? bookmarkName = null)
     {
         var parts = fullAddress.Split(':');

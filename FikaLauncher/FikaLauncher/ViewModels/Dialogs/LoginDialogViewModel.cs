@@ -86,7 +86,6 @@ namespace FikaLauncher.ViewModels.Dialogs
             LocalizationService.ChangeLanguage(value);
             _ = GitHubReadmeService.PreCacheReadmeAsync(value);
             
-            // Force UI update
             if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
                 desktop.MainWindow?.InvalidateVisual();
@@ -123,12 +122,10 @@ namespace FikaLauncher.ViewModels.Dialogs
             {
                 await AuthService.Login(Username);
                 
-                // Update settings to match dialog choices
                 ConfigurationService.Settings.RememberLogin = RememberLogin;
                 ConfigurationService.Settings.KeepLauncherOpen = KeepMeLoggedIn;
                 await ConfigurationService.SaveSettingsAsync();
 
-                // Force immediate UI update
                 if (App.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
                 {
                     var mainWindow = desktop.MainWindow;
@@ -183,7 +180,6 @@ namespace FikaLauncher.ViewModels.Dialogs
                 return;
             }
 
-            // Save the token in application state before logging in
             ApplicationStateService.SaveLoginState(Username, true, token);
             await HandleSuccessfulLogin();
         }
@@ -218,7 +214,7 @@ namespace FikaLauncher.ViewModels.Dialogs
             if (!value)
             {
                 KeepMeLoggedIn = false;
-                Username = string.Empty; // Clear username when remember login is disabled
+                Username = string.Empty;
             }
             ConfigurationService.Settings.RememberLogin = value;
             ConfigurationService.SaveSettings();

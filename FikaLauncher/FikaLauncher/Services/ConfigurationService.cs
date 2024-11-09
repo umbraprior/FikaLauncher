@@ -26,16 +26,12 @@ public static class ConfigurationService
         {
             LoadSettings();
             EnsureDefaultFiles();
-            
-            // Apply loaded settings
             ApplySettings();
-            
             Console.WriteLine("ConfigurationService initialized successfully.");
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error initializing ConfigurationService: {ex.Message}");
-            // Create default settings if loading fails
             Settings = new AppSettings();
             SaveSettings();
             ApplySettings();
@@ -62,14 +58,14 @@ public static class ConfigurationService
             {
                 Console.WriteLine($"Error loading settings, using defaults: {ex.Message}");
                 Settings = new AppSettings();
-                SaveSettings(); // Save default settings
+                SaveSettings();
             }
         }
         else
         {
             Console.WriteLine("No settings file found, creating with defaults");
             Settings = new AppSettings();
-            SaveSettings(); // Save default settings
+            SaveSettings();
         }
     }
 
@@ -113,7 +109,6 @@ public static class ConfigurationService
 
     private static void EnsureDefaultFiles()
     {
-        // Create default log file if it doesn't exist
         var logPath = Path.Combine(FileSystemService.LogsDirectory, "app.log");
         if (!File.Exists(logPath))
         {
@@ -123,15 +118,12 @@ public static class ConfigurationService
 
     private static async void ApplySettings()
     {
-        // Apply language setting
         LocalizationService.ChangeLanguage(Settings.Language);
         
-        // Apply theme setting
         App.ChangeTheme(Settings.IsDarkTheme);
         
         Console.WriteLine($"Applied settings - Language: {Settings.Language}, Theme: {(Settings.IsDarkTheme ? "Dark" : "Light")}");
 
-        // Pre-cache readme for current language only
         await GitHubReadmeService.PreCacheReadmeAsync(Settings.Language);
     }
 }
@@ -150,4 +142,5 @@ public class AppSettings
     public string SptInstallPath { get; set; } = string.Empty;
     public int CloseWindowBehavior { get; set; } = 0;
     public int LaunchGameBehavior { get; set; } = 0;
+
 }

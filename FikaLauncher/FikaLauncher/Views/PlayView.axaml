@@ -20,7 +20,7 @@
                 <Run Text="{Binding CurrentUsername}" Foreground="{DynamicResource SemiColorPrimaryActive}" FontWeight="Bold"/>
                 <Run Text="{Binding GreetingSuffix}"/>
             </TextBlock>
-            <Button Background="Transparent" Classes="Tertiary" Padding="1" VerticalAlignment="Center">
+            <Button Background="Transparent" Classes="Tertiary" Padding="1" VerticalAlignment="Center" IsEnabled="{Binding IsEnabled}">
                 <material:MaterialIcon Kind="ChevronDown"/>
                 <Button.Flyout>
                     <MenuFlyout>
@@ -136,16 +136,48 @@
                 <!-- Bookmark Buttons (When Connected) -->
                 <Panel IsVisible="{Binding IsConnected}">
                     <!-- Add Bookmark Button -->
-                    <Button Background="Transparent" 
+                    <Button x:Name="BookmarkButton"
+                            Background="Transparent" 
                             Classes="Tertiary" 
                             Padding="10" 
-                            VerticalAlignment="Center" 
-                            IsVisible="{Binding !IsCurrentServerBookmarked}"
-                            Command="{Binding BookmarkCurrentServerCommand}">
+                            VerticalAlignment="Center"
+                            Loaded="OnBookmarkButtonLoaded"
+                            IsVisible="{Binding !IsCurrentServerBookmarked}">
                         <material:MaterialIcon Kind="StarOutline" Height="20" Width="20"/>
                         <ToolTip.Tip>
                             <TextBlock Text="{l:Localize AddBookmark}"/>
                         </ToolTip.Tip>
+                        <Button.Flyout>
+                            <Flyout Placement="Bottom" 
+                                    ShowMode="Transient"
+                                    Opening="OnBookmarkFlyoutOpening">
+                                <StackPanel MinWidth="200" PointerMoved="OnFlyoutInteraction">
+                                    <TextBlock Text="{l:Localize BookmarkName}" 
+                                              Margin="8,4"
+                                              FontSize="14"
+                                              FontWeight="SemiBold"/>
+                                    <Separator Margin="0,2"/>
+                                    <Grid ColumnDefinitions="*, 8, Auto" Margin="8,4">
+                                        <TextBox Grid.Column="0"
+                                                Text="{Binding NewBookmarkName, Mode=TwoWay}"
+                                                Watermark="{Binding FullServerAddress}"
+                                                FontSize="13"
+                                                TextChanged="OnFlyoutInteraction">
+                                            <TextBox.KeyBindings>
+                                                <KeyBinding Gesture="Enter"
+                                                  Command="{Binding BookmarkCurrentServerCommand}"/>
+                                            </TextBox.KeyBindings>
+                                        </TextBox>
+                                        <Button Grid.Column="2"
+                                                Classes="Primary"
+                                                Padding="8,6"
+                                                Command="{Binding BookmarkCurrentServerCommand}">
+                                            <material:MaterialIcon Kind="Check" Width="16" Height="16"/>
+                                        </Button>
+                                    </Grid>
+                                </StackPanel>
+                            </Flyout>
+                        </Button.Flyout>
                     </Button>
                     
                     <!-- Remove Bookmark Button -->
@@ -174,6 +206,10 @@
                              Background="Transparent" 
                              InnerLeftContent="http://"
                              IsEnabled="{Binding CanConnect}">
+                        <TextBox.KeyBindings>
+                            <KeyBinding Gesture="Enter"
+                                       Command="{Binding ConnectToServerCommand}"/>
+                        </TextBox.KeyBindings>
                     </TextBox>
                     <TextBlock Grid.Column="1" Text=":" VerticalAlignment="Center" FontWeight="Bold"/>
                     <NumericUpDown Grid.Column="2" Value="{Binding ServerPort}" 
@@ -182,7 +218,12 @@
                                    Minimum="1" Maximum="9999" FormatString="0000"
                                    ClipValueToMinMax="True"
                                    ShowButtonSpinner="False"
-                                   IsEnabled="{Binding CanConnect}"/>
+                                   IsEnabled="{Binding CanConnect}">
+                        <NumericUpDown.KeyBindings>
+                            <KeyBinding Gesture="Enter"
+                                       Command="{Binding ConnectToServerCommand}"/>
+                        </NumericUpDown.KeyBindings>
+                    </NumericUpDown>
                 </Grid>
                 <Grid>
                     <Button Command="{Binding ConnectToServerCommand}" 

@@ -17,6 +17,10 @@
     </ItemGroup>
 
     <ItemGroup>
+        <EmbeddedResource Include="Assets\Terms\**\*.md" />
+    </ItemGroup>
+
+    <ItemGroup>
         <PackageReference Include="Avalonia" Version="11.2.0" />
         <PackageReference Include="Avalonia.Fonts.Inter" Version="11.2.0" />
         <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->

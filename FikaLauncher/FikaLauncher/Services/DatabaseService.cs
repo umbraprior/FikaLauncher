@@ -36,14 +36,12 @@ public static class DatabaseService
     
     private static void CreateDatabaseViews(AppDbContext context)
     {
-        // Drop existing views if they exist
         var dropViewsSql = @"
             DROP VIEW IF EXISTS UsersView;
             DROP VIEW IF EXISTS ServerBookmarksView;";
         
         context.Database.ExecuteSqlRaw(dropViewsSql);
 
-        // Create Users view
         var usersViewSql = @"
             CREATE VIEW UsersView AS
             SELECT 
@@ -55,7 +53,6 @@ public static class DatabaseService
             FROM Users
             ORDER BY CreatedAt DESC;";
         
-        // Create Server Bookmarks view with names, grouped by user
         var bookmarksViewSql = @"
             CREATE VIEW ServerBookmarksView AS
             SELECT 
@@ -167,7 +164,6 @@ public static class DatabaseService
             if (user == null)
                 return (false, null);
 
-            // If token is expired or missing, generate a new one
             if (user.TokenExpiration <= DateTime.UtcNow || string.IsNullOrEmpty(user.SecurityToken))
             {
                 var rawToken = Convert.ToBase64String(Guid.NewGuid().ToByteArray());
@@ -177,7 +173,6 @@ public static class DatabaseService
                 return (true, rawToken);
             }
 
-            // If token is valid, return existing token
             if (existingToken != null)
             {
                 var encryptedToken = EncryptToken(existingToken);
@@ -187,7 +182,6 @@ public static class DatabaseService
                 }
             }
 
-            // If token doesn't match, generate new one
             var newToken = Convert.ToBase64String(Guid.NewGuid().ToByteArray());
             user.SecurityToken = EncryptToken(newToken);
             user.TokenExpiration = DateTime.UtcNow.AddDays(30);

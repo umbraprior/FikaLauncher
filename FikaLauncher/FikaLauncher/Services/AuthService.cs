@@ -29,13 +29,11 @@ public static class AuthService
 
     public static void Initialize()
     {
-        // Let ApplicationStateService handle the login state
         ApplicationStateService.LoadLoginState();
     }
 
     public static async Task Login(string username)
     {
-        // Check if we already have a valid token
         var currentState = ApplicationStateService.GetCurrentState();
         string? token = null;
 
@@ -45,7 +43,6 @@ public static class AuthService
         }
         else
         {
-            // Generate new token if we don't have one
             var (success, newToken) = await DatabaseService.GenerateSecurityToken(username);
             if (!success || newToken == null)
             {

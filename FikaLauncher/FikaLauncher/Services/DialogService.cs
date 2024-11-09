@@ -19,7 +19,6 @@ namespace FikaLauncher.Services
             var viewNamespace = viewType.Namespace;
             var viewAssembly = viewType.Assembly;
 
-            // Check if the view is in the Dialogs subfolder
             var dialogViewType = viewAssembly.GetType($"{viewNamespace}.Dialogs.{viewType.Name}");
             
             Control view;
@@ -29,7 +28,6 @@ namespace FikaLauncher.Services
             }
             else
             {
-                // Fallback to the original behavior if not found in Dialogs subfolder
                 view = new TView();
             }
 
@@ -46,13 +44,10 @@ namespace FikaLauncher.Services
         {
             if (DialogHost.GetDialogSession(identifier)?.Content is ViewModelBase currentViewModel)
             {
-                // Store current dialog content
                 var currentContent = DialogHost.GetDialogSession(identifier)?.Content;
                 
-                // Show new dialog
                 var result = await DialogHost.Show(viewModel, identifier);
                 
-                // Restore previous dialog content
                 await DialogHost.Show(currentContent, identifier);
                 
                 return (T?)result;

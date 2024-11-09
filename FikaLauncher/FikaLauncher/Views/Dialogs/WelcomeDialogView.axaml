@@ -1,0 +1,71 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/design/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:FikaLauncher.ViewModels.Dialogs"
+             xmlns:l="using:Jeek.Avalonia.Localization"
+             xmlns:material="using:Material.Icons.Avalonia"
+             xmlns:html="clr-namespace:TheArtOfDev.HtmlRenderer.Avalonia;assembly=Avalonia.HtmlRenderer"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="FikaLauncher.Views.Dialogs.TermsDialogView"
+             x:DataType="vm:TermsDialogViewModel"
+             Name="TermsDialog">
+    
+    <Grid>
+        <Button HorizontalAlignment="Right"
+                VerticalAlignment="Top"
+                Command="{Binding ToggleThemeCommand}"
+                Classes="Primary"
+                Theme="{DynamicResource BorderlessButton}"
+                Margin="0,10,10,0"
+                ToolTip.Tip="{Binding ThemeTooltip}">
+            <material:MaterialIcon Kind="{Binding ThemeIcon}" Width="24" Height="24"/>
+        </Button>
+            
+        <StackPanel Spacing="20" Width="1000" Margin="30" MaxHeight="800">
+            <TextBlock Text="{l:Localize WelcomeToFikaLauncher}" 
+                      Classes="H1" 
+                      Theme="{StaticResource TitleTextBlock}" 
+                      HorizontalAlignment="Center"/>
+            
+            <TextBlock Text="{l:Localize TermsIntro}"
+                       TextWrapping="Wrap" 
+                       TextAlignment="Center"
+                       HorizontalAlignment="Center"/>
+
+            <Border BorderBrush="{DynamicResource BorderColor}"
+                    BorderThickness="2"
+                    CornerRadius="8"
+                    Height="450"
+                    Background="{DynamicResource SemiBackgroundColor}">
+                <Grid Background="{DynamicResource SemiBackgroundColor}">
+                    <ScrollViewer Name="TermsScroller"
+                                HorizontalScrollBarVisibility="Disabled"
+                                VerticalScrollBarVisibility="Auto"
+                                Padding="20"
+                                ScrollChanged="OnScrollChanged">
+                        <Panel Margin="0,0,0,40">
+                            <html:HtmlPanel Text="{Binding TermsHtml}"
+                                          MaxWidth="980"/>
+                        </Panel>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+
+            <CheckBox Content="{l:Localize AcceptTerms}"
+                      IsChecked="{Binding HasAcceptedCurrentTerms}"
+                      IsEnabled="{Binding HasReadTerms}"
+                      HorizontalAlignment="Center"
+                      Margin="0,10,0,0">
+            </CheckBox>
+                       
+            <Button Content="{Binding ContinueButtonText}"
+                    Command="{Binding GetStartedCommand}"
+                    Classes="Primary"
+                    Theme="{DynamicResource SolidButton}"
+                    HorizontalAlignment="Center"
+                    Margin="0,0,0,20"
+                    IsEnabled="{Binding CanContinue}"/>
+        </StackPanel>
+    </Grid>
+</UserControl>

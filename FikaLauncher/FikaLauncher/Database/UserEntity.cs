@@ -28,6 +28,5 @@ public class UserEntity
     
     public DateTime? TokenExpiration { get; set; }
 
-    // Add navigation property for server bookmarks
     public virtual ICollection<ServerBookmarkEntity> ServerBookmarks { get; set; } = new List<ServerBookmarkEntity>();
 }

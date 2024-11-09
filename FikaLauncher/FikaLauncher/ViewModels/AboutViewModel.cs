@@ -56,14 +56,18 @@ public partial class AboutViewModel : ViewModelBase
             var html = Markdig.Markdown.ToHtml(markdown, pipeline);
 
             html = RemoveTableOfContents(html);
-            html = ProcessNoteBlocks(html, _mainWindow?.ActualThemeVariant == ThemeVariant.Dark);
+            html = ProcessNoteBlocks(html, App.Current?.RequestedThemeVariant == ThemeVariant.Dark);
 
 
-            var isDark = _mainWindow?.ActualThemeVariant == ThemeVariant.Dark;
+            var isDark = App.Current?.RequestedThemeVariant == ThemeVariant.Dark;
                 
             var (backgroundColor, textColor, headingColor, linkColor) = isDark
-                ? ("#1e1e1e", "#d4d4d4", "#ffffff", "#569cd6")
-                : ("#f6f8fa", "#24292f", "#000000", "#0366d6");
+                ? ("#242424", "#d4d4d4", "#ffffff", "#569cd6")
+                : ("#ebeef0", "#24292f", "#000000", "#0366d6");
+
+            var noteBlockBgColor = isDark 
+                ? "#2d2d2d"
+                : "#dfe2e5";
 
             HtmlContent = $@"
                 <html>
@@ -385,7 +389,7 @@ public partial class AboutViewModel : ViewModelBase
                             border-left-width: 4px !important;
                             border-left-style: solid !important;
                             border-radius: 4px !important;
-                            background-color: rgb(13, 17, 23);
+                            background-color: {noteBlockBgColor};
                         }}
 
                         /* Blue for Note */
@@ -447,7 +451,7 @@ public partial class AboutViewModel : ViewModelBase
             Console.WriteLine($"Error in LoadReadme: {ex.Message}");
             Console.WriteLine($"Stack trace: {ex.StackTrace}");
             
-            var errorColor = _mainWindow?.ActualThemeVariant == ThemeVariant.Dark ? "#f14c4c" : "#ff0000";
+            var errorColor = App.Current?.RequestedThemeVariant == ThemeVariant.Dark ? "#f14c4c" : "#ff0000";
             HtmlContent = $@"
                 <div style='color: {errorColor}; padding: 20px;'>
                     <h3>Error loading content</h3>
@@ -459,7 +463,6 @@ public partial class AboutViewModel : ViewModelBase
 
     private string ProcessCodeBlocks(string html, bool isDark)
     {
-        // Handle code blocks (pre/code)
         html = System.Text.RegularExpressions.Regex.Replace(
             html,
             @"<pre><code(?:\s+class=""language-(\w+)"")?>([^<]*)</code></pre>",
@@ -484,7 +487,6 @@ public partial class AboutViewModel : ViewModelBase
             }
         );
 
-        // Handle inline code with syntax highlighting
         html = System.Text.RegularExpressions.Regex.Replace(
             html,
             @"<code>([^<]+)</code>",
@@ -492,7 +494,6 @@ public partial class AboutViewModel : ViewModelBase
             {
                 var code = System.Web.HttpUtility.HtmlDecode(match.Groups[1].Value);
                 
-                // Detect if it's likely a file path, command, or URL
                 var highlightedCode = code switch
                 {
                     var x when x.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) 
@@ -518,21 +519,18 @@ public partial class AboutViewModel : ViewModelBase
 
     private string HighlightCSharp(string code, bool isDark)
     {
-        // Comments (do these first to avoid highlighting within comments)
         code = System.Text.RegularExpressions.Regex.Replace(
             code,
             @"(//[^\n]*|/\*[\s\S]*?\*/)",
             "<span class=\"comment-block\">$1</span>"
         );
 
-        // Operators
         code = System.Text.RegularExpressions.Regex.Replace(
             code,
             @"([\+\-\*/%=<>!&\|\^~\?\:]+)",
             "<span class=\"operator\">$1</span>"
         );
 
-        // Keywords
         var keywords = new[] { 
             "using", "public", "private", "protected", "internal", "class", "interface", 
             "void", "string", "int", "bool", "var", "new", "return", "static", "async", 
@@ -550,7 +548,6 @@ public partial class AboutViewModel : ViewModelBase
             );
         }
 
-        // Types
         var types = new[] {
             "string", "int", "bool", "double", "float", "decimal", "object", "char", "byte",
             "sbyte", "uint", "long", "ulong", "short", "ushort", "dynamic", "var", "void",
@@ -566,14 +563,12 @@ public partial class AboutViewModel : ViewModelBase
             );
         }
 
-        // Strings (including verbatim strings)
         code = System.Text.RegularExpressions.Regex.Replace(
             code,
             @"(@""(?:""""|[^""])*""|""(?:\\.|[^""\\])*"")",
             "<span class=\"string\">$1</span>"
         );
 
-        // Numbers
         code = System.Text.RegularExpressions.Regex.Replace(
             code,
             @"\b\d+(?:\.\d+)?(?:[eE][+-]?\d+)?\b|0x[a-fA-F0-9]+\b",
@@ -585,35 +580,30 @@ public partial class AboutViewModel : ViewModelBase
 
     private string HighlightJson(string code, bool isDark)
     {
-        // Comments (do these first)
         code = System.Text.RegularExpressions.Regex.Replace(
             code,
             @"(//[^\n]*|/\*[\s\S]*?\*/)",
             "<span class=\"comment-block\">$1</span>"
         );
 
-        // Property names
         code = System.Text.RegularExpressions.Regex.Replace(
             code,
             @"""([^""\\]*(?:\\.[^""\\]*)*)""(\s*:)",
             "<span class=\"property\">\"$1\"</span>$2"
         );
 
-        // Strings
         code = System.Text.RegularExpressions.Regex.Replace(
             code,
             @":\s*""([^""\\]*(?:\\.[^""\\]*)*)""",
             ": <span class=\"string\">\"$1\"</span>"
         );
 
-        // Numbers
         code = System.Text.RegularExpressions.Regex.Replace(
             code,
             @"\b(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)\b",
             "<span class=\"number\">$1</span>"
         );
 
-        // Keywords
         var keywords = new[] { "true", "false", "null" };
         foreach (var keyword in keywords)
         {
@@ -629,7 +619,6 @@ public partial class AboutViewModel : ViewModelBase
 
     private string HighlightBatch(string code, bool isDark)
     {
-        // Commands
         var commands = new[] { 
             "cd", "dir", "copy", "del", "mkdir", "rmdir", "echo", "set", "if", "else", 
             "goto", "call", "start", "exit", "rem", "type", "for", "in", "do"
@@ -644,14 +633,12 @@ public partial class AboutViewModel : ViewModelBase
             );
         }
 
-        // Variables
         code = System.Text.RegularExpressions.Regex.Replace(
             code,
             @"%([^%]+)%",
             "<span class=\"property\">%$1%</span>"
         );
 
-        // Comments
         code = System.Text.RegularExpressions.Regex.Replace(
             code,
             @"(?m)^[\s]*::.*$|^[\s]*REM.*$",
@@ -663,21 +650,18 @@ public partial class AboutViewModel : ViewModelBase
 
     private string HighlightPlainText(string code, bool isDark)
     {
-        // URLs
         code = System.Text.RegularExpressions.Regex.Replace(
             code,
             @"(https?:\/\/[^\s<]+[^<.,:;""\'\]\s])",
             "<span class=\"url\">$1</span>"
         );
 
-        // IP addresses and ports
         code = System.Text.RegularExpressions.Regex.Replace(
             code,
             @"\b(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(?::\d+)?)\b",
             "<span class=\"ip-address\">$1</span>"
         );
 
-        // Numbers
         code = System.Text.RegularExpressions.Regex.Replace(
             code,
             @"\b(\d+)\b",
@@ -689,7 +673,6 @@ public partial class AboutViewModel : ViewModelBase
 
     private string HighlightInlineCode(string code, bool isDark)
     {
-        // Basic syntax highlighting for inline code
         code = System.Text.RegularExpressions.Regex.Replace(
             code,
             @"\b(true|false|null|this|new|return|if|else|var|const|let|function|class|public|private|static|void|string|int|bool)\b",
@@ -723,69 +706,71 @@ public partial class AboutViewModel : ViewModelBase
 
     private string ProcessNoteBlocks(string html, bool isDark)
     {
-        var bgColor = isDark ? "rgb(13, 17, 23)" : "rgb(246, 248, 250)";
+        var bgColor = isDark 
+            ? "#2d2d2d"
+            : "#dfe2e5";
 
-        // Process Note blocks (Blue)
         html = System.Text.RegularExpressions.Regex.Replace(
             html,
             @"<div class=""markdown-alert markdown-alert-note"">\s*<p class=""markdown-alert-title""[^>]*>.*?Note</p>\s*<p>(.*?)</p>\s*</div>",
             match => {
                 var content = match.Groups[1].Value;
-                return $"<div class=\"note-block note\" style=\"background-color: {bgColor}; border-left-color: #58a6ff !important;\">" +
-                       $"<span class=\"note-block-title\" style=\"color: #58a6ff !important;\">ℹ️ Note</span>" +
-                       $"<div class=\"note-block-content\">{content}</div></div>";
+                var noteColor = "#58a6ff";
+                return $@"<div class=""note-block note"" style=""background-color: {bgColor}; border-left-color: {noteColor} !important;"">
+                           <span class=""note-block-title"" style=""color: {noteColor} !important;"">ℹ️ Note</span>
+                           <div class=""note-block-content"" style=""font-weight: 600"">{content}</div></div>";
             },
             System.Text.RegularExpressions.RegexOptions.Singleline
         );
 
-        // Process Tip blocks (Green)
         html = System.Text.RegularExpressions.Regex.Replace(
             html,
             @"<div class=""markdown-alert markdown-alert-tip"">\s*<p class=""markdown-alert-title""[^>]*>.*?Tip</p>\s*<p>(.*?)</p>\s*</div>",
             match => {
                 var content = match.Groups[1].Value;
-                return $"<div class=\"note-block tip\" style=\"background-color: {bgColor}; border-left-color: #3fb950 !important;\">" +
-                       $"<span class=\"note-block-title\" style=\"color: #3fb950 !important;\">✅ Tip</span>" +
-                       $"<div class=\"note-block-content\">{content}</div></div>";
+                var tipColor = "#3fb950";
+                return $@"<div class=""note-block tip"" style=""background-color: {bgColor}; border-left-color: {tipColor} !important;"">
+                           <span class=""note-block-title"" style=""color: {tipColor} !important;"">✅ Tip</span>
+                           <div class=""note-block-content"" style=""font-weight: 600"">{content}</div></div>";
             },
             System.Text.RegularExpressions.RegexOptions.Singleline
         );
 
-        // Process Important blocks (Purple)
         html = System.Text.RegularExpressions.Regex.Replace(
             html,
             @"<div class=""markdown-alert markdown-alert-important"">\s*<p class=""markdown-alert-title""[^>]*>.*?Important</p>\s*<p>(.*?)</p>\s*</div>",
             match => {
                 var content = match.Groups[1].Value;
-                return $"<div class=\"note-block important\" style=\"background-color: {bgColor}; border-left-color: #8957e5 !important;\">" +
-                       $"<span class=\"note-block-title\" style=\"color: #8957e5 !important;\">☑️ Important</span>" +
-                       $"<div class=\"note-block-content\">{content}</div></div>";
+                var importantColor = "#8957e5";
+                return $@"<div class=""note-block important"" style=""background-color: {bgColor}; border-left-color: {importantColor} !important;"">
+                           <span class=""note-block-title"" style=""color: {importantColor} !important;"">☑️ Important</span>
+                           <div class=""note-block-content"" style=""font-weight: 600"">{content}</div></div>";
             },
             System.Text.RegularExpressions.RegexOptions.Singleline
         );
 
-        // Process Warning blocks (Yellow)
         html = System.Text.RegularExpressions.Regex.Replace(
             html,
             @"<div class=""markdown-alert markdown-alert-warning"">\s*<p class=""markdown-alert-title""[^>]*>.*?Warning</p>\s*<p>(.*?)</p>\s*</div>",
             match => {
                 var content = match.Groups[1].Value;
-                return $"<div class=\"note-block warning\" style=\"background-color: {bgColor}; border-left-color: #d29922 !important;\">" +
-                       $"<span class=\"note-block-title\" style=\"color: #d29922 !important;\">⚠️ Warning</span>" +
-                       $"<div class=\"note-block-content\">{content}</div></div>";
+                var warningColor = "#d29922";
+                return $@"<div class=""note-block warning"" style=""background-color: {bgColor}; border-left-color: {warningColor} !important;"">
+                           <span class=""note-block-title"" style=""color: {warningColor} !important;"">⚠️ Warning</span>
+                           <div class=""note-block-content"" style=""font-weight: 600"">{content}</div></div>";
             },
             System.Text.RegularExpressions.RegexOptions.Singleline
         );
 
-        // Process Caution blocks (Red)
         html = System.Text.RegularExpressions.Regex.Replace(
             html,
             @"<div class=""markdown-alert markdown-alert-caution"">\s*<p class=""markdown-alert-title""[^>]*>.*?Caution</p>\s*<p>(.*?)</p>\s*</div>",
             match => {
                 var content = match.Groups[1].Value;
-                return $"<div class=\"note-block caution\" style=\"background-color: {bgColor}; border-left-color: #f85149 !important;\">" +
-                       $"<span class=\"note-block-title\" style=\"color: #f85149 !important;\">⛔ Caution</span>" +
-                       $"<div class=\"note-block-content\">{content}</div></div>";
+                var cautionColor = "#f85149";
+                return $@"<div class=""note-block caution"" style=""background-color: {bgColor}; border-left-color: {cautionColor} !important;"">
+                           <span class=""note-block-title"" style=""color: {cautionColor} !important;"">⛔ Caution</span>
+                           <div class=""note-block-content"" style=""font-weight: 600"">{content}</div></div>";
             },
             System.Text.RegularExpressions.RegexOptions.Singleline
         );

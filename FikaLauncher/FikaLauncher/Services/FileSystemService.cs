@@ -9,7 +9,6 @@ public static class FileSystemService
 {
     private static readonly string AppName = "FikaLauncher";
     
-    // Base directories
     public static string AppDataDirectory { get; private set; } = string.Empty;
     public static string TempDirectory { get; private set; } = string.Empty;
     public static string LogsDirectory { get; private set; } = string.Empty;
@@ -22,16 +21,13 @@ public static class FileSystemService
         {
             Console.WriteLine("Initializing FileSystemService...");
             
-            // Initialize base app directory based on platform
             AppDataDirectory = GetPlatformSpecificAppDataPath();
-            
-            // Initialize subdirectories
+
             TempDirectory = Path.Combine(AppDataDirectory, "temp");
             LogsDirectory = Path.Combine(AppDataDirectory, "logs");
             SettingsDirectory = Path.Combine(AppDataDirectory, "settings");
             CacheDirectory = Path.Combine(AppDataDirectory, "cache");
 
-            // Ensure directories exist
             EnsureDirectoriesExist();
             
             Console.WriteLine($"FileSystemService initialized successfully.");
@@ -109,19 +105,16 @@ public static class FileSystemService
         {
             if (Directory.Exists(CacheDirectory))
             {
-                // Delete all files first
                 foreach (var file in Directory.GetFiles(CacheDirectory))
                 {
                     try
                     {
-                        // Force garbage collection to release any file handles
                         GC.Collect();
                         GC.WaitForPendingFinalizers();
                         
-                        // Try to clear any read-only attributes
                         File.SetAttributes(file, FileAttributes.Normal);
                         
-                        // Try to delete with retries
+
                         for (int i = 0; i < 3; i++)
                         {
                             try
@@ -131,7 +124,7 @@ public static class FileSystemService
                             }
                             catch (IOException) when (i < 2)
                             {
-                                Thread.Sleep(100); // Wait briefly before retry
+                                Thread.Sleep(100);
                             }
                         }
                     }
@@ -141,7 +134,6 @@ public static class FileSystemService
                     }
                 }
 
-                // Delete all subdirectories
                 foreach (var dir in Directory.GetDirectories(CacheDirectory))
                 {
                     try
@@ -155,7 +147,6 @@ public static class FileSystemService
                 }
             }
 
-            // Ensure the directory exists
             Directory.CreateDirectory(CacheDirectory);
         }
         catch (Exception ex)
