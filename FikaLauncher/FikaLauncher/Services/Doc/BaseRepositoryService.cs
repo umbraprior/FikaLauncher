@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -31,16 +32,22 @@ public abstract class BaseRepositoryService : IRepositoryService
 
     public virtual async Task<string?> DownloadContent(string filePath)
     {
-        var rawClient = new HttpClient
-        {
-            BaseAddress = new Uri(RawContentUrl)
-        };
-
-        var fullPath = $"{_owner}/{_repo}/{_branch}/{filePath}";
-        Console.WriteLine($"Downloading from: {RawContentUrl}{fullPath}");
-
         try
         {
+            using var rawClient = new HttpClient
+            {
+                BaseAddress = new Uri(RawContentUrl)
+            };
+
+            // Copy authentication header if it exists
+            if (_httpClient.DefaultRequestHeaders.Authorization != null)
+            {
+                rawClient.DefaultRequestHeaders.Authorization = _httpClient.DefaultRequestHeaders.Authorization;
+            }
+
+            var fullPath = $"{_owner}/{_repo}/{_branch}/{filePath}";
+            Console.WriteLine($"Downloading from: {RawContentUrl}{fullPath}");
+
             var response = await rawClient.GetAsync(fullPath);
             if (response.IsSuccessStatusCode)
             {
@@ -58,4 +65,11 @@ public abstract class BaseRepositoryService : IRepositoryService
             return null;
         }
     }
+
+    protected void SetBaseAddress()
+    {
+        _httpClient.BaseAddress = new Uri(BaseApiUrl);
+    }
+
+    public abstract Task<List<string>?> GetDirectoryContents(string path);
 }

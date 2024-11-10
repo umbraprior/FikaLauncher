@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using FikaLauncher.Services;
-using Jeek.Avalonia.Localization;
+using FikaLauncher.Localization;
 
 public static class ApplicationStateService
 {

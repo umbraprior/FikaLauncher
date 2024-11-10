@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using FikaLauncher.Database;
-using Jeek.Avalonia.Localization;
+using FikaLauncher.Localization;
 
 namespace FikaLauncher.Services;
 

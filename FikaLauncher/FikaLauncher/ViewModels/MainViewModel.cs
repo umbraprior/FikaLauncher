@@ -6,11 +6,12 @@ using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using System.IO;
 using Avalonia.Media;
-using Jeek.Avalonia.Localization;
+using FikaLauncher.Localization;
 using Avalonia.Controls.Notifications;
 using Avalonia.Controls.ApplicationLifetimes;
 using FikaLauncher.Views;
 using FikaLauncher.Services;
+using System.Threading.Tasks;
 
 namespace FikaLauncher.ViewModels;
 
@@ -107,8 +108,16 @@ public partial class MainViewModel : ViewModelBase
 
     partial void OnLanguageChanged(string value)
     {
-        LocalizationService.ChangeLanguage(value);
-        _ = RepositoryReadmeService.PreCacheReadmeAsync(value);
+        if (ConfigurationService.Settings.Language != value)
+        {
+            ConfigurationService.Settings.Language = value;
+            _ = LocalizationService.ChangeLanguageAsync(value);
+            Task.Run(async () =>
+            {
+                await ConfigurationService.SaveSettingsAsync();
+                await RepositoryReadmeService.PreCacheReadmeAsync(value);
+            });
+        }
     }
 
     public void ShowNotification(string title, string message, NotificationType type)

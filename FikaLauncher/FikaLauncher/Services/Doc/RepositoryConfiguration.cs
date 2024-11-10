@@ -12,6 +12,12 @@ public static class RepositoryConfiguration
 {
     private static readonly Dictionary<string, RepositoryInfo> Repositories = new()
     {
+        ["FikaLauncher"] = new()
+        {
+            Owner = "umbraprior",
+            Repository = "FikaLauncher",
+            Branch = "main"
+        },
         ["FikaDocumentation"] = new()
         {
             Owner = "project-fika",

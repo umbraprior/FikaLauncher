@@ -3,25 +3,18 @@ using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
+using FikaLauncher.Services.Doc;
 
 namespace FikaLauncher.Services;
 
 public static class RepositoryReadmeService
 {
-    private static readonly HttpClient _httpClient = new()
-    {
-        BaseAddress = new Uri("https://api.github.com/")
-    };
-
-    private const string Owner = "project-fika";
-    private const string Repo = "Fika-Documentation";
-    private const string Branch = "main";
+    private static readonly IRepositoryService _repository;
 
     static RepositoryReadmeService()
     {
-        _httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("FikaLauncher", "1.0"));
-        _httpClient.DefaultRequestHeaders.Accept.Add(
-            new MediaTypeWithQualityHeaderValue("application/vnd.github.v3+json"));
+        var repoInfo = RepositoryConfiguration.GetRepository("FikaDocumentation");
+        _repository = RepositoryServiceFactory.Create("https://github.com", repoInfo);
     }
 
     private static string GetGitHubFilePath(string language)
@@ -35,42 +28,7 @@ public static class RepositoryReadmeService
     {
         try
         {
-            var url = $"repos/{Owner}/{Repo}/commits?path={filePath}&sha={Branch}&per_page=1";
-            Console.WriteLine($"Checking GitHub API: https://api.github.com/{url}");
-
-            var response = await _httpClient.GetAsync(url);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                Console.WriteLine($"Failed to get commit info: {response.StatusCode}");
-                Console.WriteLine($"Response: {await response.Content.ReadAsStringAsync()}");
-                return (null, null);
-            }
-
-            var content = await response.Content.ReadAsStringAsync();
-            using var doc = System.Text.Json.JsonDocument.Parse(content);
-            var root = doc.RootElement;
-
-            if (root.GetArrayLength() == 0)
-            {
-                Console.WriteLine("No commits found for file");
-                return (null, null);
-            }
-
-            var commit = root[0];
-            var commitHash = commit.GetProperty("sha").GetString();
-            var dateStr = commit.GetProperty("commit")
-                .GetProperty("committer")
-                .GetProperty("date")
-                .GetString();
-
-            if (string.IsNullOrEmpty(commitHash) || string.IsNullOrEmpty(dateStr))
-            {
-                Console.WriteLine("Invalid commit info received from GitHub");
-                return (null, null);
-            }
-
-            return (commitHash, DateTime.Parse(dateStr));
+            return await _repository.GetLatestCommitInfo(filePath);
         }
         catch (Exception ex)
         {
@@ -110,33 +68,25 @@ public static class RepositoryReadmeService
 
     private static async Task<string?> DownloadReadmeContent(string language)
     {
-        var rawClient = new HttpClient
-        {
-            BaseAddress = new Uri("https://raw.githubusercontent.com/")
-        };
-
-        var filePath = $"{Owner}/{Repo}/{Branch}/{GetGitHubFilePath(language)}";
-        Console.WriteLine($"Downloading from: https://raw.githubusercontent.com/{filePath}");
+        var filePath = GetGitHubFilePath(language);
+        Console.WriteLine($"Downloading readme: {filePath}");
 
         try
         {
-            var (commitHash, commitDate) = await GetLatestCommitInfo(GetGitHubFilePath(language));
+            var (commitHash, commitDate) = await GetLatestCommitInfo(filePath);
             if (commitHash == null || !commitDate.HasValue)
                 return null;
 
-            var response = await rawClient.GetAsync(filePath);
-            if (response.IsSuccessStatusCode)
+            var content = await _repository.DownloadContent(filePath);
+            if (content != null)
             {
-                var content = await response.Content.ReadAsStringAsync();
-                Console.WriteLine(
-                    $"Successfully downloaded content (length: {content.Length}, commit: {commitHash[..7]})");
-
+                Console.WriteLine($"Successfully downloaded content (length: {content.Length}, commit: {commitHash[..7]})");
                 await ReadmeCacheService.SaveToCache(content, ReadmeCacheService.GetCacheFilePath(language), commitHash,
                     commitDate.Value);
                 return content;
             }
 
-            Console.WriteLine($"Download failed with status: {response.StatusCode}");
+            Console.WriteLine("Download failed");
             return null;
         }
         catch (Exception ex)
@@ -149,13 +99,9 @@ public static class RepositoryReadmeService
     private static async Task<bool> DoesLanguageReadmeExist(string language)
     {
         var filePath = GetGitHubFilePath(language);
-        var url = $"repos/{Owner}/{Repo}/contents/{filePath}?ref={Branch}";
-        Console.WriteLine($"Checking file exists: https://api.github.com/{url}");
-
         try
         {
-            var response = await _httpClient.GetAsync(url);
-            return response.IsSuccessStatusCode;
+            return await _repository.DoesFileExist(filePath);
         }
         catch
         {

@@ -1,5 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
-using Jeek.Avalonia.Localization;
+using FikaLauncher.Localization;
 
 namespace FikaLauncher.ViewModels;
 

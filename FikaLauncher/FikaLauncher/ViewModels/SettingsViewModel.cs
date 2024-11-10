@@ -1,6 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using Avalonia.Styling;
-using Jeek.Avalonia.Localization;
+using FikaLauncher.Localization;
 using Avalonia.Controls.Notifications;
 using Avalonia.Interactivity;
 using Avalonia.Controls;
@@ -144,7 +144,7 @@ public partial class SettingsViewModel : ViewModelBase
         if (ConfigurationService.Settings.Language != value)
         {
             ConfigurationService.Settings.Language = value;
-            LocalizationService.ChangeLanguage(value);
+            _ = LocalizationService.ChangeLanguageAsync(value);
             Task.Run(async () =>
             {
                 await ConfigurationService.SaveSettingsAsync();

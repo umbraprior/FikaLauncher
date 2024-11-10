@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -8,7 +9,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
-using Jeek.Avalonia.Localization;
+using FikaLauncher.Localization;
 
 namespace FikaLauncher.Services;
 
@@ -18,6 +19,7 @@ public class LocalizationService : INotifyPropertyChanged
     public static LocalizationService Instance => _instance;
 
     public event PropertyChangedEventHandler? PropertyChanged;
+    public IReadOnlyCollection<string> AvailableLanguages => Localizer.Languages;
 
     private string _currentLanguage = "en-US";
 
@@ -30,9 +32,8 @@ public class LocalizationService : INotifyPropertyChanged
             {
                 _currentLanguage = value;
                 Localizer.Language = value;
-
                 OnPropertyChanged();
-                OnPropertyChanged(nameof(Localizer.Languages));
+                OnPropertyChanged(nameof(AvailableLanguages));
 
                 Dispatcher.UIThread.Post(() =>
                 {
@@ -56,8 +57,7 @@ public class LocalizationService : INotifyPropertyChanged
 
     private void Initialize()
     {
-        Localizer.SetLocalizer(new JsonLocalizer());
-        CurrentLanguage = "en-US";
+        CurrentLanguage = ConfigurationService.Settings.Language ?? "en-US";
     }
 
     public static async Task ChangeLanguageAsync(string language)
@@ -73,11 +73,6 @@ public class LocalizationService : INotifyPropertyChanged
                 await RepositoryReadmeService.PreCacheReadmeAsync(language);
             });
         }
-    }
-
-    public static void ChangeLanguage(string language)
-    {
-        _ = ChangeLanguageAsync(language);
     }
 
     protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
