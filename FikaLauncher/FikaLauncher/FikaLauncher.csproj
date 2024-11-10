@@ -8,6 +8,8 @@
 
     <ItemGroup>
         <AvaloniaResource Include="Assets\**"/>
+        <AvaloniaResource Include="Languages\Terms\Fika\en-US.md" />
+        <AvaloniaResource Include="Languages\Terms\Launcher\en-US.md" />
     </ItemGroup>
 
     <ItemGroup>
@@ -18,6 +20,8 @@
 
     <ItemGroup>
         <EmbeddedResource Include="Assets\Terms\**\*.md"/>
+        <EmbeddedResource Include="Languages\Terms\Fika\en-US.md" />
+        <EmbeddedResource Include="Languages\Terms\Launcher\en-US.md" />
     </ItemGroup>
 
     <ItemGroup>
@@ -41,6 +45,11 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup>
+      <UpToDateCheckInput Remove="Assets\Terms\Fika\en-US.md" />
+      <UpToDateCheckInput Remove="Assets\Terms\Launcher\en-US.md" />
     </ItemGroup>
 
 </Project>

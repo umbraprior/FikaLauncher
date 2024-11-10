@@ -14,8 +14,8 @@ public static class TermsService
             var assembly = Assembly.GetExecutingAssembly();
             var currentLanguage = LocalizationService.Instance.CurrentLanguage;
             var resourcePath = isLauncherTerms
-                ? $"FikaLauncher.Assets.Terms.Launcher.{currentLanguage}.md"
-                : $"FikaLauncher.Assets.Terms.Fika.{currentLanguage}.md";
+                ? $"FikaLauncher.Languages.Terms.Launcher.{currentLanguage}.md"
+                : $"FikaLauncher.Languages.Terms.Fika.{currentLanguage}.md";
 
             Console.WriteLine($"[Terms] Current language: {currentLanguage}");
             Console.WriteLine($"[Terms] Attempting to load terms from: {resourcePath}");
@@ -27,8 +27,8 @@ public static class TermsService
                 Console.WriteLine($"[Terms] No localized version found for {currentLanguage}");
 
                 resourcePath = isLauncherTerms
-                    ? "FikaLauncher.Assets.Terms.Launcher.en-US.md"
-                    : "FikaLauncher.Assets.Terms.Fika.en-US.md";
+                    ? "FikaLauncher.Languages.Terms.Launcher.en-US.md"
+                    : "FikaLauncher.Languages.Terms.Fika.en-US.md";
 
                 Console.WriteLine($"[Terms] Falling back to English terms: {resourcePath}");
                 stream = assembly.GetManifestResourceStream(resourcePath);
