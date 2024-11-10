@@ -124,4 +124,4 @@ Support is voided if you:
 
 ---
 
-*By using Project Fika, you acknowledge that you have read, understood, and agree to all conditions outlined above.*
+_By using Project Fika, you acknowledge that you have read, understood, and agree to all conditions outlined above._
