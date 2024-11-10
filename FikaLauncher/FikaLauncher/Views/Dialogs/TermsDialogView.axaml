@@ -3,7 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/design/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:FikaLauncher.ViewModels.Dialogs"
-             xmlns:l="using:Jeek.Avalonia.Localization"
+             xmlns:l="using:FikaLauncher.Localization"
              xmlns:material="using:Material.Icons.Avalonia"
              xmlns:html="clr-namespace:TheArtOfDev.HtmlRenderer.Avalonia;assembly=Avalonia.HtmlRenderer"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"

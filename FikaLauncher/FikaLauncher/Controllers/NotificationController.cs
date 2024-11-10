@@ -2,7 +2,7 @@ using Avalonia.Controls.Notifications;
 using Avalonia.Controls.ApplicationLifetimes;
 using FikaLauncher.Views;
 using FikaLauncher.ViewModels;
-using Jeek.Avalonia.Localization;
+using FikaLauncher.Localization;
 
 namespace FikaLauncher.Services;
 

@@ -14,7 +14,7 @@ using System.Threading;
 using FikaLauncher.Services;
 using FikaLauncher.Views.Dialogs;
 using FikaLauncher.ViewModels.Dialogs;
-using Jeek.Avalonia.Localization;
+using FikaLauncher.Localization;
 using Avalonia.Controls.ApplicationLifetimes;
 using FikaLauncher.Database;
 using System.Collections.ObjectModel;

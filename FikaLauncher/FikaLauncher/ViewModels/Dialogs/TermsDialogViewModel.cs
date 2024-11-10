@@ -12,6 +12,8 @@ using FikaLauncher.Views.Dialogs;
 using Avalonia.VisualTree;
 using System.Linq;
 using System.ComponentModel;
+using System.Threading.Tasks;
+using Avalonia.Threading;
 
 namespace FikaLauncher.ViewModels.Dialogs;
 
@@ -60,34 +62,52 @@ public partial class TermsDialogViewModel : ViewModelBase
 
         if (!HasAcceptedLauncherTerms)
             IsLauncherTerms = true;
-        else if (!HasAcceptedFikaTerms) IsLauncherTerms = false;
+        else if (!HasAcceptedFikaTerms) 
+            IsLauncherTerms = false;
 
-        LoadTerms();
+        Dispatcher.UIThread.Post(async () => await LoadTerms());
         UpdateThemeIcon();
         UpdateContinueButtonText();
         LocalizationService.Instance.PropertyChanged += OnLanguageServiceChanged;
     }
 
-    private void LoadTerms()
+    private async Task LoadTerms()
     {
-        var isDark = App.Current?.RequestedThemeVariant == Avalonia.Styling.ThemeVariant.Dark;
-        TermsHtml = TermsService.GetProcessedTerms(isDark, IsLauncherTerms);
-        ForceReload = !ForceReload;
-
-        HasReadTerms = false;
-        HasAcceptedCurrentTerms = false;
-
-        if (App.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+        try 
         {
-            var mainWindow = desktop.MainWindow;
-            var dialog = mainWindow?.GetVisualDescendants()
-                .OfType<TermsDialogView>()
-                .FirstOrDefault();
-            dialog?.ResetScroll();
-        }
+            var isDark = App.Current?.RequestedThemeVariant == Avalonia.Styling.ThemeVariant.Dark;
+            
+            // First ensure terms are cached
+            await RepositoryTermsService.PreCacheTermsAsync(LocalizationService.Instance.CurrentLanguage, IsLauncherTerms);
+            
+            // Then get the processed terms
+            var terms = await RepositoryTermsService.GetProcessedTerms(isDark, IsLauncherTerms);
 
-        UpdateCanContinue();
-        UpdateContinueButtonText();
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                TermsHtml = terms;
+                ForceReload = !ForceReload;
+                HasReadTerms = false;
+                HasAcceptedCurrentTerms = false;
+
+                if (App.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+                {
+                    var mainWindow = desktop.MainWindow;
+                    var dialog = mainWindow?.GetVisualDescendants()
+                        .OfType<TermsDialogView>()
+                        .FirstOrDefault();
+                    dialog?.ResetScroll();
+                }
+
+                UpdateCanContinue();
+                UpdateContinueButtonText();
+            });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading terms: {ex.Message}");
+            TermsHtml = "Error loading terms of use.";
+        }
     }
 
     private void UpdateContinueButtonText()
@@ -130,7 +150,7 @@ public partial class TermsDialogViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void ToggleTheme()
+    private async void ToggleTheme()
     {
         var isDark = App.Current?.RequestedThemeVariant != Avalonia.Styling.ThemeVariant.Dark;
         ConfigurationService.Settings.IsDarkTheme = isDark;
@@ -141,13 +161,13 @@ public partial class TermsDialogViewModel : ViewModelBase
             if (desktop.MainWindow?.DataContext is MainViewModel mainViewModel)
                 mainViewModel.UpdateLogo(isDark);
 
-        LoadTerms();
+        await Task.Run(LoadTerms);
         UpdateThemeIcon();
         NotificationController.ShowThemeChanged(isDark);
     }
 
     [RelayCommand]
-    private void GetStarted()
+    private async void GetStarted()
     {
         if (!CanContinue) return;
 
@@ -164,7 +184,7 @@ public partial class TermsDialogViewModel : ViewModelBase
             if (!HasAcceptedFikaTerms)
             {
                 IsLauncherTerms = false;
-                LoadTerms();
+                await Dispatcher.UIThread.InvokeAsync(async () => await LoadTerms());
                 return;
             }
         }
@@ -202,13 +222,13 @@ public partial class TermsDialogViewModel : ViewModelBase
         if (e.PropertyName == nameof(LocalizationService.CurrentLanguage))
         {
             Language = LocalizationService.Instance.CurrentLanguage;
-            LoadTerms();
+            Dispatcher.UIThread.Post(async () => await LoadTerms());
         }
     }
 
     partial void OnLanguageChanged(string value)
     {
-        LocalizationService.ChangeLanguage(value);
+        _ = LocalizationService.ChangeLanguageAsync(value);
     }
 
     public override void Dispose()

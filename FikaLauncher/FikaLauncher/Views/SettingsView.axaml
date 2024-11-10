@@ -2,7 +2,7 @@
     x:Class="FikaLauncher.Views.SettingsView"
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:l="using:Jeek.Avalonia.Localization"
+    xmlns:l="using:FikaLauncher.Localization"
     xmlns:vm="clr-namespace:FikaLauncher.ViewModels"
     xmlns:material="using:Material.Icons.Avalonia"
     x:DataType="vm:SettingsViewModel">

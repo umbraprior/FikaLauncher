@@ -112,7 +112,7 @@ public static class ConfigurationService
 
     private static async void ApplySettings()
     {
-        LocalizationService.ChangeLanguage(Settings.Language);
+        _ = LocalizationService.ChangeLanguageAsync(Settings.Language);
 
         App.ChangeTheme(Settings.IsDarkTheme);
 

@@ -2,6 +2,9 @@ using System;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
+using System.Text.Json;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace FikaLauncher.Services.Doc;
 
@@ -20,6 +23,7 @@ public class GiteaRepositoryService : BaseRepositoryService
 
     protected override void ConfigureHttpClient()
     {
+        SetBaseAddress();
         _httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("FikaLauncher", "1.0"));
     }
 
@@ -68,5 +72,39 @@ public class GiteaRepositoryService : BaseRepositoryService
         {
             return false;
         }
+    }
+
+    public override async Task<List<string>?> GetDirectoryContents(string path)
+    {
+        try
+        {
+            var url = $"repos/{_owner}/{_repo}/contents/{path}?ref={_branch}";
+            var response = await _httpClient.GetAsync(url);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                var items = JsonSerializer.Deserialize<List<GiteaContentItem>>(content, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+                return items?.Select(i => i.Name).ToList();
+            }
+
+            Console.WriteLine($"Failed to get directory contents with status: {response.StatusCode}");
+            return null;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error getting directory contents: {ex.Message}");
+            return null;
+        }
+    }
+
+    private class GiteaContentItem
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Type { get; set; } = string.Empty;
     }
 }

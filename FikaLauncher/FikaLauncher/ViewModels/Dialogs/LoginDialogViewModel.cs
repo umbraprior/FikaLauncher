@@ -11,7 +11,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using System.Threading.Tasks;
 using Avalonia.Controls.Notifications;
-using Jeek.Avalonia.Localization;
+using FikaLauncher.Localization;
 using Avalonia.VisualTree;
 using System.Linq;
 using Material.Icons;
@@ -80,11 +80,16 @@ public partial class LoginDialogViewModel : ViewModelBase
 
     partial void OnLanguageChanged(string value)
     {
-        LocalizationService.ChangeLanguage(value);
-        _ = RepositoryReadmeService.PreCacheReadmeAsync(value);
-
-        if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-            desktop.MainWindow?.InvalidateVisual();
+        if (ConfigurationService.Settings.Language != value)
+        {
+            ConfigurationService.Settings.Language = value;
+            _ = LocalizationService.ChangeLanguageAsync(value);
+            Task.Run(async () =>
+            {
+                await ConfigurationService.SaveSettingsAsync();
+                await RepositoryReadmeService.PreCacheReadmeAsync(value);
+            });
+        }
     }
 
     partial void OnUsernameChanged(string value)
