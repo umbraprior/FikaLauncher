@@ -33,9 +33,10 @@
     </ItemGroup>
 
     <ItemGroup>
-        <EmbeddedResource Include="Languages\*.json"/>
-        <EmbeddedResource Include="Languages\Terms\Launcher\*.md"/>
-        <EmbeddedResource Include="Languages\Terms\Fika\*.md"/>
+        <EmbeddedResource Include="Languages\**\strings.json"/>
+        <EmbeddedResource Include="Languages\**\fika-terms.md"/>
+        <EmbeddedResource Include="Languages\**\launcher-terms.md" />
+        
     </ItemGroup>
 
 </Project>
