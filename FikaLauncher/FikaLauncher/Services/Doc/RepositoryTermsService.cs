@@ -27,11 +27,20 @@ public static class RepositoryTermsService
     {
         try
         {
-            return await _repository.GetLatestCommitInfo(filePath);
+            var result = await _repository.GetLatestCommitInfo(filePath);
+            if (result.commitHash == null && result.commitDate == null)
+            {
+                NotificationController.ShowGitHubRateLimited();
+            }
+            return result;
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error getting commit info: {ex.Message}");
+            if (ex.Message.Contains("rate limit", StringComparison.OrdinalIgnoreCase))
+            {
+                NotificationController.ShowGitHubRateLimited();
+            }
             return (null, null);
         }
     }
@@ -45,18 +54,8 @@ public static class RepositoryTermsService
             if (latestCommitHash == null)
                 return false;
 
-            var cacheFilePath = TermsCacheService.GetCacheFilePath(language, isLauncherTerms);
-            if (!File.Exists(cacheFilePath))
-                return true;
-
-            var cachedInfo = await TermsCacheService.ReadCacheInfo(cacheFilePath);
-            if (cachedInfo == null)
-                return true;
-
-            var needsUpdate = cachedInfo.CommitHash != latestCommitHash;
-            Console.WriteLine(
-                $"Cache commit: {cachedInfo.CommitHash[..7]}, Latest commit: {latestCommitHash[..7]}, Needs update: {needsUpdate}");
-            return needsUpdate;
+            var (_, cacheInfo) = await TermsCacheService.GetCachedTerms(language, latestCommitHash, isLauncherTerms);
+            return cacheInfo == null;
         }
         catch (Exception ex)
         {
@@ -76,14 +75,23 @@ public static class RepositoryTermsService
             if (commitHash == null || !commitDate.HasValue)
                 return null;
 
+            if (DateTime.UtcNow - commitDate.Value < TimeSpan.FromMinutes(15))
+            {
+                Console.WriteLine($"Skipping download for {language} - commit is too recent ({commitDate.Value:HH:mm:ss UTC})");
+                return null;
+            }
+
+            var (cachedContent, cacheInfo) = await TermsCacheService.GetCachedTerms(language, commitHash, isLauncherTerms);
+            if (cachedContent != null && cacheInfo != null)
+            {
+                return cachedContent;
+            }
+
             var content = await _repository.DownloadContent(filePath);
             if (content != null)
             {
-                Console.WriteLine(
-                    $"Successfully downloaded terms (length: {content.Length}, commit: {commitHash[..7]})");
-                await TermsCacheService.SaveToCache(content,
-                    TermsCacheService.GetCacheFilePath(language, isLauncherTerms),
-                    commitHash, commitDate.Value);
+                Console.WriteLine($"Successfully downloaded terms (length: {content.Length}, commit: {commitHash[..7]})");
+                await TermsCacheService.SaveToCache(content, language, commitHash, commitDate.Value, isLauncherTerms);
                 return content;
             }
 
@@ -97,53 +105,48 @@ public static class RepositoryTermsService
         }
     }
 
-    public static async Task<string> GetProcessedTerms(bool isDark, bool isLauncherTerms = true)
+    public static async Task<string> GetTermsAsync(string language, bool isLauncherTerms, bool isDark = false)
     {
         try
         {
-            var currentLanguage = LocalizationService.Instance.CurrentLanguage;
-            var cacheFilePath = TermsCacheService.GetCacheFilePath(currentLanguage, isLauncherTerms);
-
-            Console.WriteLine($"[Terms] Getting terms for language: {currentLanguage}");
-
-            string? content;
-            if (File.Exists(cacheFilePath) && !await ShouldUpdateCache(currentLanguage, isLauncherTerms))
+            if (language != "en-US" && !await DoesLanguageTermsExist(language, isLauncherTerms))
             {
-                Console.WriteLine("[Terms] Using existing cache");
-                content = await TermsCacheService.ReadFromCache(cacheFilePath);
-                if (content != null)
-                {
-                    Console.WriteLine($"[Terms] Successfully loaded cached terms for {currentLanguage}");
-                    return await ProcessTermsContent(content, isDark);
-                }
+                Console.WriteLine($"No terms exist for {language}, using English");
+                return await GetEnglishTerms(isLauncherTerms);
             }
 
-            content = await DownloadTermsContent(currentLanguage, isLauncherTerms);
-            if (content == null)
-            {
-                Console.WriteLine($"[Terms] No localized version found for {currentLanguage}");
-                content = await GetEnglishTerms(isLauncherTerms);
-            }
+            var filePath = GetTermsPath(language, isLauncherTerms);
+            var (latestCommitHash, commitDate) = await GetLatestCommitInfo(filePath);
+            if (latestCommitHash == null)
+                return await GetEnglishTerms(isLauncherTerms);
 
-            return await ProcessTermsContent(content, isDark);
+            var (cachedContent, cacheInfo) = await TermsCacheService.GetCachedTerms(language, latestCommitHash, isLauncherTerms);
+            if (cachedContent != null)
+                return await ProcessTermsContent(cachedContent, isDark);
+
+            var downloadedContent = await DownloadTermsContent(language, isLauncherTerms);
+            if (downloadedContent == null)
+                return await GetEnglishTerms(isLauncherTerms);
+
+            return await ProcessTermsContent(downloadedContent, isDark);
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Failed to load terms: {ex.Message}");
-            return "Error loading terms of use.";
+            return await GetEnglishTerms(isLauncherTerms);
         }
     }
 
     private static async Task<string> GetEnglishTerms(bool isLauncherTerms)
     {
-        var englishCachePath = TermsCacheService.GetCacheFilePath("en-US", isLauncherTerms);
+        var filePath = GetTermsPath("en-US", isLauncherTerms);
+        var (latestCommitHash, _) = await GetLatestCommitInfo(filePath);
+        if (latestCommitHash == null)
+            return "Error loading terms of use.";
 
-        if (File.Exists(englishCachePath) && !await ShouldUpdateCache("en-US", isLauncherTerms))
-        {
-            var content = await TermsCacheService.ReadFromCache(englishCachePath);
-            if (content != null)
-                return content;
-        }
+        var (cachedContent, _) = await TermsCacheService.GetCachedTerms("en-US", latestCommitHash, isLauncherTerms);
+        if (cachedContent != null)
+            return cachedContent;
 
         var downloadedContent = await DownloadTermsContent("en-US", isLauncherTerms);
         return downloadedContent ?? "Error loading terms of use.";
@@ -317,24 +320,26 @@ public static class RepositoryTermsService
     {
         try
         {
-            var cacheFilePath = TermsCacheService.GetCacheFilePath(language, isLauncherTerms);
-
             if (language != "en-US" && !await DoesLanguageTermsExist(language, isLauncherTerms))
             {
                 Console.WriteLine($"No terms exist for {language}, using English");
                 language = "en-US";
-                cacheFilePath = TermsCacheService.GetCacheFilePath("en-US", isLauncherTerms);
             }
 
-            if (await ShouldUpdateCache(language, isLauncherTerms))
+            var filePath = GetTermsPath(language, isLauncherTerms);
+            var (latestCommitHash, _) = await GetLatestCommitInfo(filePath);
+            if (latestCommitHash == null)
+                return;
+
+            var (_, cacheInfo) = await TermsCacheService.GetCachedTerms(language, latestCommitHash, isLauncherTerms);
+            if (cacheInfo == null)
             {
                 Console.WriteLine($"Cache needs updating for {language}, downloading new content");
                 await DownloadTermsContent(language, isLauncherTerms);
             }
             else
             {
-                var cachedInfo = await TermsCacheService.ReadCacheInfo(cacheFilePath);
-                Console.WriteLine($"Cache is up to date for {language} (commit: {cachedInfo?.CommitHash[..7]})");
+                Console.WriteLine($"Cache is up to date for {language} (commit: {cacheInfo.CommitHash[..7]})");
             }
         }
         catch (Exception ex)
@@ -353,6 +358,41 @@ public static class RepositoryTermsService
         catch
         {
             return false;
+        }
+    }
+
+    public static async Task<string> GetProcessedTerms(bool isDark, bool isLauncherTerms)
+    {
+        var currentLanguage = LocalizationService.Instance.CurrentLanguage;
+        Console.WriteLine($"Getting terms for language: {currentLanguage}");
+
+        try
+        {
+            if (currentLanguage != "en-US" && !await DoesLanguageTermsExist(currentLanguage, isLauncherTerms))
+            {
+                Console.WriteLine($"No {currentLanguage} terms exist, using English");
+                currentLanguage = "en-US";
+            }
+
+            var filePath = GetTermsPath(currentLanguage, isLauncherTerms);
+            var (latestCommitHash, _) = await GetLatestCommitInfo(filePath);
+            if (latestCommitHash == null)
+                return "Error loading terms of use.";
+
+            var (cachedContent, cacheInfo) = await TermsCacheService.GetCachedTerms(currentLanguage, latestCommitHash, isLauncherTerms);
+            if (cachedContent != null)
+                return await ProcessTermsContent(cachedContent, isDark);
+
+            var downloadedContent = await DownloadTermsContent(currentLanguage, isLauncherTerms);
+            if (downloadedContent == null)
+                return "Error loading terms of use.";
+
+            return await ProcessTermsContent(downloadedContent, isDark);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error getting terms content: {ex.Message}");
+            return "Error loading terms of use.";
         }
     }
 }

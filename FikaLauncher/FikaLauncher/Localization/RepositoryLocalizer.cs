@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
+using System.Text.Json;
 
 namespace FikaLauncher.Localization;
 
@@ -56,30 +59,25 @@ public class RepositoryLocalizer : BaseLocalizer
         {
             if (_loadingLanguages.TryGetValue(language, out var isLoading) && isLoading)
                 return;
-
+            
             _loadingLanguages[language] = true;
         }
 
         try
         {
-            var newStrings = await Services.RepositoryLocaleService.GetLocaleStrings(language);
-
-            if (newStrings == null)
+            var (strings, cacheInfo) = await Services.RepositoryLocaleService.GetLocaleStringsWithInfo(language);
+            if (strings == null || cacheInfo == null)
             {
                 if (language != DefaultLanguage)
                 {
                     _language = DefaultLanguage;
                     await LoadLanguageStrings(DefaultLanguage);
                 }
-
                 return;
             }
 
-            var oldStrings = _languageStrings;
-            _languageStrings = newStrings;
-
-            if (oldStrings != null)
-                oldStrings.Clear();
+            // Switch to new strings
+            _languageStrings = strings;
         }
         finally
         {

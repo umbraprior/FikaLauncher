@@ -28,11 +28,20 @@ public static class RepositoryReadmeService
     {
         try
         {
-            return await _repository.GetLatestCommitInfo(filePath);
+            var result = await _repository.GetLatestCommitInfo(filePath);
+            if (result.commitHash == null && result.commitDate == null)
+            {
+                NotificationController.ShowGitHubRateLimited();
+            }
+            return result;
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error getting commit info: {ex.Message}");
+            if (ex.Message.Contains("rate limit", StringComparison.OrdinalIgnoreCase))
+            {
+                NotificationController.ShowGitHubRateLimited();
+            }
             return (null, null);
         }
     }
@@ -46,18 +55,8 @@ public static class RepositoryReadmeService
             if (latestCommitHash == null)
                 return false;
 
-            var cacheFilePath = ReadmeCacheService.GetCacheFilePath(language);
-            if (!File.Exists(cacheFilePath))
-                return true;
-
-            var cachedInfo = await ReadmeCacheService.ReadCacheInfo(cacheFilePath);
-            if (cachedInfo == null)
-                return true;
-
-            var needsUpdate = cachedInfo.CommitHash != latestCommitHash;
-            Console.WriteLine(
-                $"Cache commit: {cachedInfo.CommitHash[..7]}, Latest commit: {latestCommitHash[..7]}, Needs update: {needsUpdate}");
-            return needsUpdate;
+            var (_, cacheInfo) = await ReadmeCacheService.GetCachedReadme(language, latestCommitHash);
+            return cacheInfo == null;
         }
         catch (Exception ex)
         {
@@ -77,13 +76,17 @@ public static class RepositoryReadmeService
             if (commitHash == null || !commitDate.HasValue)
                 return null;
 
+            if (DateTime.UtcNow - commitDate.Value < TimeSpan.FromMinutes(15))
+            {
+                Console.WriteLine($"Skipping download for {language} - commit is too recent ({commitDate.Value:HH:mm:ss UTC})");
+                return null;
+            }
+
             var content = await _repository.DownloadContent(filePath);
             if (content != null)
             {
-                Console.WriteLine(
-                    $"Successfully downloaded content (length: {content.Length}, commit: {commitHash[..7]})");
-                await ReadmeCacheService.SaveToCache(content, ReadmeCacheService.GetCacheFilePath(language), commitHash,
-                    commitDate.Value);
+                Console.WriteLine($"Successfully downloaded content (length: {content.Length}, commit: {commitHash[..7]})");
+                await ReadmeCacheService.SaveToCache(content, language, commitHash, commitDate.Value);
                 return content;
             }
 
@@ -113,8 +116,6 @@ public static class RepositoryReadmeService
     public static async Task<string> GetReadmeContentAsync()
     {
         var currentLanguage = LocalizationService.Instance.CurrentLanguage;
-        var cacheFilePath = ReadmeCacheService.GetCacheFilePath(currentLanguage);
-
         Console.WriteLine($"Getting readme for language: {currentLanguage}");
 
         try
@@ -122,35 +123,37 @@ public static class RepositoryReadmeService
             if (currentLanguage != "en-US" && !await DoesLanguageReadmeExist(currentLanguage))
             {
                 Console.WriteLine($"No {currentLanguage} readme exists, using English");
-                return await GetEnglishContent(ReadmeCacheService.GetCacheFilePath("en-US"));
+                return await GetEnglishContent();
             }
 
-            if (File.Exists(cacheFilePath) && !await ShouldUpdateCache(currentLanguage))
-            {
-                Console.WriteLine("Using existing cache");
-                var content = await ReadmeCacheService.ReadFromCache(cacheFilePath);
-                if (content != null)
-                    return content;
-            }
+            var filePath = GetGitHubFilePath(currentLanguage);
+            var (latestCommitHash, _) = await GetLatestCommitInfo(filePath);
+            if (latestCommitHash == null)
+                return await GetEnglishContent();
+
+            var (cachedContent, cacheInfo) = await ReadmeCacheService.GetCachedReadme(currentLanguage, latestCommitHash);
+            if (cachedContent != null)
+                return cachedContent;
 
             var downloadedContent = await DownloadReadmeContent(currentLanguage);
-            return downloadedContent ?? await GetEnglishContent(ReadmeCacheService.GetCacheFilePath("en-US"));
+            return downloadedContent ?? await GetEnglishContent();
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error getting readme content: {ex.Message}");
-            return await GetEnglishContent(ReadmeCacheService.GetCacheFilePath("en-US"));
+            return await GetEnglishContent();
         }
     }
 
-    private static async Task<string> GetEnglishContent(string englishCachePath)
+    private static async Task<string> GetEnglishContent()
     {
-        if (File.Exists(englishCachePath) && !await ShouldUpdateCache("en-US"))
-        {
-            var content = await ReadmeCacheService.ReadFromCache(englishCachePath);
-            if (content != null)
-                return content;
-        }
+        var (latestCommitHash, _) = await GetLatestCommitInfo("README.md");
+        if (latestCommitHash == null)
+            return "# Error\nFailed to load documentation from GitHub.";
+
+        var (cachedContent, _) = await ReadmeCacheService.GetCachedReadme("en-US", latestCommitHash);
+        if (cachedContent != null)
+            return cachedContent;
 
         var downloadedContent = await DownloadReadmeContent("en-US");
         return downloadedContent ?? "# Error\nFailed to load documentation from GitHub.";
@@ -160,24 +163,26 @@ public static class RepositoryReadmeService
     {
         try
         {
-            var cacheFilePath = ReadmeCacheService.GetCacheFilePath(language);
-
             if (language != "en-US" && !await DoesLanguageReadmeExist(language))
             {
                 Console.WriteLine($"No readme exists for {language}, using English");
                 language = "en-US";
-                cacheFilePath = ReadmeCacheService.GetCacheFilePath("en-US");
             }
 
-            if (await ShouldUpdateCache(language))
+            var filePath = GetGitHubFilePath(language);
+            var (latestCommitHash, _) = await GetLatestCommitInfo(filePath);
+            if (latestCommitHash == null)
+                return;
+
+            var (_, cacheInfo) = await ReadmeCacheService.GetCachedReadme(language, latestCommitHash);
+            if (cacheInfo == null)
             {
                 Console.WriteLine($"Cache needs updating for {language}, downloading new content");
                 await DownloadReadmeContent(language);
             }
             else
             {
-                var cachedInfo = await ReadmeCacheService.ReadCacheInfo(cacheFilePath);
-                Console.WriteLine($"Cache is up to date for {language} (commit: {cachedInfo?.CommitHash[..7]})");
+                Console.WriteLine($"Cache is up to date for {language} (commit: {cacheInfo.CommitHash[..7]})");
             }
         }
         catch (Exception ex)

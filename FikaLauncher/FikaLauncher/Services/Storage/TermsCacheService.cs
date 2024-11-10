@@ -13,12 +13,82 @@ public static class TermsCacheService
         public DateTime CommitDate { get; set; }
     }
 
-    private const string CacheFileName = "terms-{0}-{1}.md";
+    private const string CacheFileName = "terms-{0}-{1}-{2}.md";
 
-    public static string GetCacheFilePath(string language, bool isLauncherTerms)
+    public static string GetCacheFilePath(string language, string commitHash, bool isLauncherTerms)
     {
         var type = isLauncherTerms ? "launcher" : "fika";
-        return FileSystemService.GetCacheFilePath(string.Format(CacheFileName, type, language));
+        return FileSystemService.GetCacheFilePath(string.Format(CacheFileName, type, language, commitHash[..7]));
+    }
+
+    public static async Task<(string? content, TermsInfo? info)> GetCachedTerms(string language, string commitHash, bool isLauncherTerms)
+    {
+        var path = GetCacheFilePath(language, commitHash, isLauncherTerms);
+        
+        var content = await ReadFromCache(path);
+        if (content != null)
+        {
+            var info = await ReadCacheInfo(path);
+            if (info != null && info.CommitHash == commitHash)
+            {
+                return (content, info);
+            }
+        }
+
+        return (null, null);
+    }
+
+    public static async Task SaveToCache(string content, string language, string commitHash, DateTime commitDate, bool isLauncherTerms)
+    {
+        var path = GetCacheFilePath(language, commitHash, isLauncherTerms);
+        var info = new TermsInfo
+        {
+            CommitHash = commitHash,
+            CommitDate = commitDate
+        };
+
+        await SaveToCache(content, path, info);
+        await CleanupOldTermsFiles(language, commitHash, isLauncherTerms);
+    }
+
+    private static async Task CleanupOldTermsFiles(string language, string currentCommitHash, bool isLauncherTerms)
+    {
+        try
+        {
+            var cacheDir = FileSystemService.CacheDirectory;
+            var type = isLauncherTerms ? "launcher" : "fika";
+            var termsPrefix = $"terms-{type}-{language}-";
+            var currentCacheFile = GetCacheFilePath(language, currentCommitHash, isLauncherTerms);
+
+            foreach (var file in Directory.GetFiles(cacheDir, $"{termsPrefix}*.md"))
+            {
+                if (file != currentCacheFile)
+                {
+                    try
+                    {
+                        File.SetAttributes(file, FileAttributes.Normal);
+                        File.Delete(file);
+
+                        var infoFile = file + ".info";
+                        if (File.Exists(infoFile))
+                        {
+                            File.SetAttributes(infoFile, FileAttributes.Normal);
+                            File.Delete(infoFile);
+                        }
+
+                        Console.WriteLine($"Cleaned up old terms file: {Path.GetFileName(file)}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error cleaning up old terms file {file}: {ex.Message}");
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error during terms cleanup: {ex.Message}");
+        }
     }
 
     public static async Task<TermsInfo?> ReadCacheInfo(string cacheFilePath)
@@ -45,7 +115,7 @@ public static class TermsCacheService
         }
     }
 
-    public static async Task SaveToCache(string content, string cacheFilePath, string commitHash, DateTime commitDate)
+    public static async Task SaveToCache(string content, string cacheFilePath, TermsInfo info)
     {
         try
         {
@@ -62,11 +132,6 @@ public static class TermsCacheService
             File.SetAttributes(cacheFilePath, File.GetAttributes(cacheFilePath) | FileAttributes.ReadOnly);
 
             var infoPath = cacheFilePath + ".info";
-            var termsInfo = new TermsInfo
-            {
-                CommitHash = commitHash,
-                CommitDate = commitDate
-            };
 
             if (File.Exists(infoPath))
             {
@@ -75,11 +140,11 @@ public static class TermsCacheService
                     infoFile.Attributes &= ~FileAttributes.ReadOnly;
             }
 
-            var json = JsonSerializer.Serialize(termsInfo);
+            var json = JsonSerializer.Serialize(info);
             await File.WriteAllTextAsync(infoPath, json);
             File.SetAttributes(infoPath, File.GetAttributes(infoPath) | FileAttributes.ReadOnly);
 
-            Console.WriteLine($"Successfully saved terms to cache (commit: {commitHash[..7]})");
+            Console.WriteLine($"Successfully saved terms to cache (commit: {info.CommitHash[..7]})");
         }
         catch (Exception ex)
         {

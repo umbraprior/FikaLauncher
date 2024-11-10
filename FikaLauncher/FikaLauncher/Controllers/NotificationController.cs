@@ -158,4 +158,13 @@ public static class NotificationController
             NotificationType.Information
         );
     }
+
+    public static void ShowGitHubRateLimited()
+    {
+        Show(
+            "GitHub Rate Limit",
+            "You have been rate limited by GitHub. Please try again later.",
+            NotificationType.Error
+        );
+    }
 }

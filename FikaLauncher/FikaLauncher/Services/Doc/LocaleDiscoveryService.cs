@@ -49,17 +49,27 @@ public static class LocaleDiscoveryService
     {
         try
         {
-            var cacheFilePath = LocaleCacheService.GetCacheFilePath(language);
+            var filePath = $"{LocaleDirectory}/{language}.json";
+            var (latestCommitHash, commitDate) = await _repository.GetLatestCommitInfo(filePath);
+            if (latestCommitHash == null || commitDate == null)
+                return;
 
-            if (await ShouldUpdateLocaleCache(language))
+            // Add 15-minute delay for recent commits
+            if (DateTime.UtcNow - commitDate.Value < TimeSpan.FromMinutes(15))
+            {
+                Console.WriteLine($"Skipping cache update for {language} - commit is too recent ({commitDate.Value:HH:mm:ss UTC})");
+                return;
+            }
+
+            var (cachedContent, cacheInfo) = await LocaleCacheService.GetCachedLocale(language, latestCommitHash);
+            if (cachedContent == null)
             {
                 Console.WriteLine($"Cache needs updating for {language}, downloading new content");
                 await RepositoryLocaleService.GetLocaleStrings(language);
             }
             else
             {
-                var cachedInfo = await LocaleCacheService.ReadCacheInfo(cacheFilePath);
-                Console.WriteLine($"Locale cache is up to date for {language} (commit: {cachedInfo?.CommitHash[..7]})");
+                Console.WriteLine($"Locale cache is up to date for {language} (commit: {cacheInfo?.CommitHash[..7]})");
             }
         }
         catch (Exception ex)
@@ -77,15 +87,8 @@ public static class LocaleDiscoveryService
             if (latestCommitHash == null)
                 return false;
 
-            var cacheFilePath = LocaleCacheService.GetCacheFilePath(language);
-            if (!File.Exists(cacheFilePath))
-                return true;
-
-            var cachedInfo = await LocaleCacheService.ReadCacheInfo(cacheFilePath);
-            if (cachedInfo == null)
-                return true;
-
-            return cachedInfo.CommitHash != latestCommitHash;
+            var (_, cacheInfo) = await LocaleCacheService.GetCachedLocale(language, latestCommitHash);
+            return cacheInfo == null;
         }
         catch (Exception ex)
         {

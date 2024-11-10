@@ -13,11 +13,11 @@ public static class ReadmeCacheService
         public DateTime CommitDate { get; set; }
     }
 
-    private const string CacheFileName = "readme-{0}.md";
+    private const string CacheFileName = "readme-{0}-{1}.md";
 
-    public static string GetCacheFilePath(string language)
+    public static string GetCacheFilePath(string language, string commitHash)
     {
-        return FileSystemService.GetCacheFilePath(string.Format(CacheFileName, language));
+        return FileSystemService.GetCacheFilePath(string.Format(CacheFileName, language, commitHash[..7]));
     }
 
     public static async Task<ReadmeInfo?> ReadCacheInfo(string cacheFilePath)
@@ -44,45 +44,55 @@ public static class ReadmeCacheService
         }
     }
 
-    public static async Task SaveToCache(string content, string cacheFilePath, string commitHash, DateTime commitDate)
+    public static async Task SaveToCache(string content, string language, string commitHash, DateTime commitDate)
+    {
+        var path = GetCacheFilePath(language, commitHash);
+        var info = new ReadmeInfo
+        {
+            CommitHash = commitHash,
+            CommitDate = commitDate
+        };
+
+        await SaveToCache(content, path, info);
+        await CleanupOldReadmeFiles(language, commitHash);
+    }
+
+    private static async Task CleanupOldReadmeFiles(string language, string currentCommitHash)
     {
         try
         {
-            Console.WriteLine($"Saving content to cache: {cacheFilePath}");
+            var cacheDir = FileSystemService.CacheDirectory;
+            var readmePrefix = $"readme-{language}-";
+            var currentCacheFile = GetCacheFilePath(language, currentCommitHash);
 
-            if (File.Exists(cacheFilePath))
+            foreach (var file in Directory.GetFiles(cacheDir, $"{readmePrefix}*.md"))
             {
-                var fileInfo = new FileInfo(cacheFilePath);
-                if ((fileInfo.Attributes & FileAttributes.ReadOnly) == FileAttributes.ReadOnly)
-                    fileInfo.Attributes &= ~FileAttributes.ReadOnly;
+                if (file != currentCacheFile)
+                {
+                    try
+                    {
+                        File.SetAttributes(file, FileAttributes.Normal);
+                        File.Delete(file);
+
+                        var infoFile = file + ".info";
+                        if (File.Exists(infoFile))
+                        {
+                            File.SetAttributes(infoFile, FileAttributes.Normal);
+                            File.Delete(infoFile);
+                        }
+
+                        Console.WriteLine($"Cleaned up old readme file: {Path.GetFileName(file)}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error cleaning up old readme file {file}: {ex.Message}");
+                    }
+                }
             }
-
-            await File.WriteAllTextAsync(cacheFilePath, content);
-            File.SetAttributes(cacheFilePath, File.GetAttributes(cacheFilePath) | FileAttributes.ReadOnly);
-
-            var infoPath = cacheFilePath + ".info";
-            var readmeInfo = new ReadmeInfo
-            {
-                CommitHash = commitHash,
-                CommitDate = commitDate
-            };
-
-            if (File.Exists(infoPath))
-            {
-                var infoFile = new FileInfo(infoPath);
-                if ((infoFile.Attributes & FileAttributes.ReadOnly) == FileAttributes.ReadOnly)
-                    infoFile.Attributes &= ~FileAttributes.ReadOnly;
-            }
-
-            var json = JsonSerializer.Serialize(readmeInfo);
-            await File.WriteAllTextAsync(infoPath, json);
-            File.SetAttributes(infoPath, File.GetAttributes(infoPath) | FileAttributes.ReadOnly);
-
-            Console.WriteLine($"Successfully saved to cache (commit: {commitHash[..7]})");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error saving to cache: {ex.Message}");
+            Console.WriteLine($"Error during readme cleanup: {ex.Message}");
         }
     }
 
@@ -99,6 +109,40 @@ public static class ReadmeCacheService
         {
             Console.WriteLine($"Error reading from cache: {ex.Message}");
             return null;
+        }
+    }
+
+    public static async Task<(string? content, ReadmeInfo? info)> GetCachedReadme(string language, string commitHash)
+    {
+        var path = GetCacheFilePath(language, commitHash);
+        
+        var content = await ReadFromCache(path);
+        if (content != null)
+        {
+            var info = await ReadCacheInfo(path);
+            if (info != null && info.CommitHash == commitHash)
+            {
+                return (content, info);
+            }
+        }
+
+        return (null, null);
+    }
+
+    private static async Task SaveToCache(string content, string path, ReadmeInfo info)
+    {
+        try
+        {
+            var directory = Path.GetDirectoryName(path);
+            if (directory != null)
+                Directory.CreateDirectory(directory);
+
+            await File.WriteAllTextAsync(path, content);
+            await File.WriteAllTextAsync(path + ".info", JsonSerializer.Serialize(info));
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving to cache: {ex.Message}");
         }
     }
 }
