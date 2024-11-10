@@ -1,3 +1,0 @@
-files:
-  - source: /FikaLauncher/FikaLauncher/Languages/**/*
-    translation: /Languages/**/%locale%.%file_extension%
