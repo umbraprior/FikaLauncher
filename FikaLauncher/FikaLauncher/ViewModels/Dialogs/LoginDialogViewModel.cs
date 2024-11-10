@@ -168,13 +168,9 @@ public partial class LoginDialogViewModel : ViewModelBase
 
         var isValid = await UserService.ValidateUser(Username, Password);
         if (isValid)
-        {
             await HandleSuccessfulLogin();
-        }
         else
-        {
             NotificationController.ShowInvalidCredentials();
-        }
     }
 
     partial void OnRememberLoginChanged(bool value)

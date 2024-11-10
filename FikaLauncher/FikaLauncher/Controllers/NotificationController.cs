@@ -158,5 +158,4 @@ public static class NotificationController
             NotificationType.Information
         );
     }
-
 }
