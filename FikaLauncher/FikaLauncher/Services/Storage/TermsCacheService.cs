@@ -21,24 +21,23 @@ public static class TermsCacheService
         return FileSystemService.GetCacheFilePath(string.Format(CacheFileName, type, language, commitHash[..7]));
     }
 
-    public static async Task<(string? content, TermsInfo? info)> GetCachedTerms(string language, string commitHash, bool isLauncherTerms)
+    public static async Task<(string? content, TermsInfo? info)> GetCachedTerms(string language, string commitHash,
+        bool isLauncherTerms)
     {
         var path = GetCacheFilePath(language, commitHash, isLauncherTerms);
-        
+
         var content = await ReadFromCache(path);
         if (content != null)
         {
             var info = await ReadCacheInfo(path);
-            if (info != null && info.CommitHash == commitHash)
-            {
-                return (content, info);
-            }
+            if (info != null && info.CommitHash == commitHash) return (content, info);
         }
 
         return (null, null);
     }
 
-    public static async Task SaveToCache(string content, string language, string commitHash, DateTime commitDate, bool isLauncherTerms)
+    public static async Task SaveToCache(string content, string language, string commitHash, DateTime commitDate,
+        bool isLauncherTerms)
     {
         var path = GetCacheFilePath(language, commitHash, isLauncherTerms);
         var info = new TermsInfo
@@ -61,9 +60,7 @@ public static class TermsCacheService
             var currentCacheFile = GetCacheFilePath(language, currentCommitHash, isLauncherTerms);
 
             foreach (var file in Directory.GetFiles(cacheDir, $"{termsPrefix}*.md"))
-            {
                 if (file != currentCacheFile)
-                {
                     try
                     {
                         File.SetAttributes(file, FileAttributes.Normal);
@@ -82,8 +79,6 @@ public static class TermsCacheService
                     {
                         Console.WriteLine($"Error cleaning up old terms file {file}: {ex.Message}");
                     }
-                }
-            }
         }
         catch (Exception ex)
         {

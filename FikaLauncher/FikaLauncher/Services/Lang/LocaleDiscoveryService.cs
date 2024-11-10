@@ -36,8 +36,12 @@ public static class LocaleDiscoveryService
                 Console.WriteLine($"Discovered locale: {locale}");
             }
 
-            // Pre-cache all discovered locales
-            foreach (var locale in _availableLocales) await PreCacheLocaleAsync(locale);
+            // Only pre-cache English and current system language if different
+            var currentLanguage = System.Globalization.CultureInfo.CurrentCulture.Name;
+            await PreCacheLocaleAsync("en-US");
+
+            if (currentLanguage != "en-US" && _availableLocales.Contains(currentLanguage))
+                await PreCacheLocaleAsync(currentLanguage);
         }
         catch (Exception ex)
         {
@@ -45,7 +49,7 @@ public static class LocaleDiscoveryService
         }
     }
 
-    private static async Task PreCacheLocaleAsync(string language)
+    public static async Task PreCacheLocaleAsync(string language)
     {
         try
         {
@@ -57,7 +61,8 @@ public static class LocaleDiscoveryService
             // Add 15-minute delay for recent commits
             if (DateTime.UtcNow - commitDate.Value < TimeSpan.FromMinutes(15))
             {
-                Console.WriteLine($"Skipping cache update for {language} - commit is too recent ({commitDate.Value:HH:mm:ss UTC})");
+                Console.WriteLine(
+                    $"Skipping cache update for {language} - commit is too recent ({commitDate.Value:HH:mm:ss UTC})");
                 return;
             }
 

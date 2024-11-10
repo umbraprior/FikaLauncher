@@ -39,7 +39,6 @@ public abstract class BaseRepositoryService : IRepositoryService
                 BaseAddress = new Uri(RawContentUrl)
             };
 
-            // Copy authentication header if it exists
             if (_httpClient.DefaultRequestHeaders.Authorization != null)
                 rawClient.DefaultRequestHeaders.Authorization = _httpClient.DefaultRequestHeaders.Authorization;
 

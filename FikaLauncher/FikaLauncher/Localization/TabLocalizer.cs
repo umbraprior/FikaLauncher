@@ -82,4 +82,12 @@ public class TabLocalizer(string tabFilePath = "") : BaseLocalizer, ILocalizer
 
         return $"{Language}:{key}";
     }
+
+    public override IEnumerable<string> GetAllKeys()
+    {
+        if (!_hasLoaded)
+            Reload();
+
+        return _languageStrings.Keys;
+    }
 }

@@ -32,4 +32,10 @@
         </PackageReference>
     </ItemGroup>
 
+    <ItemGroup>
+        <EmbeddedResource Include="Languages\*.json"/>
+        <EmbeddedResource Include="Languages\Terms\Launcher\*.md"/>
+        <EmbeddedResource Include="Languages\Terms\Fika\*.md"/>
+    </ItemGroup>
+
 </Project>

@@ -43,4 +43,6 @@ public abstract class BaseLocalizer : ILocalizer
     {
         LanguageChanged?.Invoke(null, EventArgs.Empty);
     }
+
+    public abstract IEnumerable<string> GetAllKeys();
 }

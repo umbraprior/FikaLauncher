@@ -12,4 +12,5 @@ public interface ILocalizer
     string Get(string key);
     event EventHandler LanguageChanged;
     void RefreshUI();
+    IEnumerable<string> GetAllKeys();
 }

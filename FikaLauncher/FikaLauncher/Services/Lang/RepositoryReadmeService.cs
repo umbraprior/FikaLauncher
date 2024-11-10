@@ -29,19 +29,14 @@ public static class RepositoryReadmeService
         try
         {
             var result = await _repository.GetLatestCommitInfo(filePath);
-            if (result.commitHash == null && result.commitDate == null)
-            {
-                NotificationController.ShowGitHubRateLimited();
-            }
+            if (result.commitHash == null && result.commitDate == null) NotificationController.ShowGitHubRateLimited();
             return result;
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error getting commit info: {ex.Message}");
             if (ex.Message.Contains("rate limit", StringComparison.OrdinalIgnoreCase))
-            {
                 NotificationController.ShowGitHubRateLimited();
-            }
             return (null, null);
         }
     }
@@ -78,20 +73,19 @@ public static class RepositoryReadmeService
 
             if (DateTime.UtcNow - commitDate.Value < TimeSpan.FromMinutes(15))
             {
-                Console.WriteLine($"Skipping download for {language} - commit is too recent ({commitDate.Value:HH:mm:ss UTC})");
+                Console.WriteLine(
+                    $"Skipping download for {language} - commit is too recent ({commitDate.Value:HH:mm:ss UTC})");
                 return null;
             }
 
             var (cachedContent, cacheInfo) = await ReadmeCacheService.GetCachedReadme(language, commitHash);
-            if (cachedContent != null && cacheInfo != null)
-            {
-                return cachedContent;
-            }
+            if (cachedContent != null && cacheInfo != null) return cachedContent;
 
             var content = await _repository.DownloadContent(filePath);
             if (content != null)
             {
-                Console.WriteLine($"Successfully downloaded content (length: {content.Length}, commit: {commitHash[..7]})");
+                Console.WriteLine(
+                    $"Successfully downloaded content (length: {content.Length}, commit: {commitHash[..7]})");
                 await ReadmeCacheService.SaveToCache(content, language, commitHash, commitDate.Value);
                 return content;
             }
@@ -137,7 +131,8 @@ public static class RepositoryReadmeService
             if (latestCommitHash == null)
                 return await GetEnglishContent();
 
-            var (cachedContent, cacheInfo) = await ReadmeCacheService.GetCachedReadme(currentLanguage, latestCommitHash);
+            var (cachedContent, cacheInfo) =
+                await ReadmeCacheService.GetCachedReadme(currentLanguage, latestCommitHash);
             if (cachedContent != null)
                 return cachedContent;
 

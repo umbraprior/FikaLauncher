@@ -63,16 +63,14 @@ public class LocalizationService : INotifyPropertyChanged
     public static async Task ChangeLanguageAsync(string language)
     {
         if (Instance.CurrentLanguage != language)
-        {
-            ConfigurationService.Settings.Language = language;
-            Instance.CurrentLanguage = language;
-
             await Task.Run(async () =>
             {
+                await LocaleDiscoveryService.PreCacheLocaleAsync(language);
+                ConfigurationService.Settings.Language = language;
+                Instance.CurrentLanguage = language;
                 await ConfigurationService.SaveSettingsAsync();
                 await RepositoryReadmeService.PreCacheReadmeAsync(language);
             });
-        }
     }
 
     protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)

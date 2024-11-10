@@ -66,9 +66,7 @@ public static class ReadmeCacheService
             var currentCacheFile = GetCacheFilePath(language, currentCommitHash);
 
             foreach (var file in Directory.GetFiles(cacheDir, $"{readmePrefix}*.md"))
-            {
                 if (file != currentCacheFile)
-                {
                     try
                     {
                         File.SetAttributes(file, FileAttributes.Normal);
@@ -87,8 +85,6 @@ public static class ReadmeCacheService
                     {
                         Console.WriteLine($"Error cleaning up old readme file {file}: {ex.Message}");
                     }
-                }
-            }
         }
         catch (Exception ex)
         {
@@ -115,15 +111,12 @@ public static class ReadmeCacheService
     public static async Task<(string? content, ReadmeInfo? info)> GetCachedReadme(string language, string commitHash)
     {
         var path = GetCacheFilePath(language, commitHash);
-        
+
         var content = await ReadFromCache(path);
         if (content != null)
         {
             var info = await ReadCacheInfo(path);
-            if (info != null && info.CommitHash == commitHash)
-            {
-                return (content, info);
-            }
+            if (info != null && info.CommitHash == commitHash) return (content, info);
         }
 
         return (null, null);

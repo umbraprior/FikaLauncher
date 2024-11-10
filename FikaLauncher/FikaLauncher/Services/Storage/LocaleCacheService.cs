@@ -23,15 +23,12 @@ public static class LocaleCacheService
     public static async Task<(string? content, LocaleInfo? info)> GetCachedLocale(string language, string commitHash)
     {
         var path = GetCacheFilePath(language, commitHash);
-        
+
         var content = await ReadFromCache(path);
         if (content != null)
         {
             var info = await ReadCacheInfo(path);
-            if (info != null && info.CommitHash == commitHash)
-            {
-                return (content, info);
-            }
+            if (info != null && info.CommitHash == commitHash) return (content, info);
         }
 
         return (null, null);
@@ -132,9 +129,7 @@ public static class LocaleCacheService
             var currentCacheFile = GetCacheFilePath(language, currentCommitHash);
 
             foreach (var file in Directory.GetFiles(cacheDir, $"{localePrefix}*.json"))
-            {
                 if (file != currentCacheFile)
-                {
                     try
                     {
                         // Remove read-only attribute if present
@@ -155,8 +150,6 @@ public static class LocaleCacheService
                     {
                         Console.WriteLine($"Error cleaning up old locale file {file}: {ex.Message}");
                     }
-                }
-            }
         }
         catch (Exception ex)
         {
