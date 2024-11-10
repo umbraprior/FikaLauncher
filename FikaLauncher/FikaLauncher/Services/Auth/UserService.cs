@@ -43,6 +43,9 @@ public static class UserService
         if (!password.Any(char.IsDigit))
             return (false, "Password must contain at least one number");
 
+        if (!password.Any(c => !char.IsLetterOrDigit(c)))
+            return (false, "Password must contain at least one special character");
+
         return (true, string.Empty);
     }
 
