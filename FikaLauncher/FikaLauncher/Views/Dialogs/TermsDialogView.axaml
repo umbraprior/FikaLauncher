@@ -12,6 +12,18 @@
              Name="TermsDialog">
     
     <Grid>
+        <StackPanel Orientation="Horizontal" 
+                    HorizontalAlignment="Left" 
+                    VerticalAlignment="Top" 
+                    Spacing="10" 
+                    Margin="10,10,0,0">
+            <material:MaterialIcon Kind="Earth" Height="25" Width="25"/>
+            <ComboBox SelectedIndex="0" 
+                      Width="100"
+                      ItemsSource="{x:Static l:Localizer.Languages}"
+                      SelectedItem="{Binding Language}"/>
+        </StackPanel>
+
         <Button HorizontalAlignment="Right"
                 VerticalAlignment="Top"
                 Command="{Binding ToggleThemeCommand}"

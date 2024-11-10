@@ -11,6 +11,7 @@ using Avalonia.Controls;
 using FikaLauncher.Views.Dialogs;
 using Avalonia.VisualTree;
 using System.Linq;
+using System.ComponentModel;
 
 namespace FikaLauncher.ViewModels.Dialogs;
 
@@ -59,6 +60,9 @@ public partial class TermsDialogViewModel : ViewModelBase
     [ObservableProperty]
     private bool _hasAcceptedCurrentTerms;
 
+    [ObservableProperty]
+    private string _language = LocalizationService.Instance.CurrentLanguage;
+
     public TermsDialogViewModel()
     {
         ApplicationStateService.LoadState();
@@ -80,6 +84,7 @@ public partial class TermsDialogViewModel : ViewModelBase
         LoadTerms();
         UpdateThemeIcon();
         UpdateContinueButtonText();
+        LocalizationService.Instance.PropertyChanged += OnLanguageServiceChanged;
     }
 
     private void LoadTerms()
@@ -217,5 +222,25 @@ public partial class TermsDialogViewModel : ViewModelBase
             HasAcceptedFikaTerms = value;
         }
         UpdateCanContinue();
+    }
+
+    private void OnLanguageServiceChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(LocalizationService.CurrentLanguage))
+        {
+            Language = LocalizationService.Instance.CurrentLanguage;
+            LoadTerms();
+        }
+    }
+
+    partial void OnLanguageChanged(string value)
+    {
+        LocalizationService.ChangeLanguage(value);
+    }
+
+    public override void Dispose()
+    {
+        LocalizationService.Instance.PropertyChanged -= OnLanguageServiceChanged;
+        base.Dispose();
     }
 }

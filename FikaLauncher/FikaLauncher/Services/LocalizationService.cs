@@ -2,6 +2,7 @@ using System;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -59,9 +60,24 @@ public class LocalizationService : INotifyPropertyChanged
         CurrentLanguage = "en-US";
     }
 
+    public static async Task ChangeLanguageAsync(string language)
+    {
+        if (Instance.CurrentLanguage != language)
+        {
+            ConfigurationService.Settings.Language = language;
+            Instance.CurrentLanguage = language;
+            
+            await Task.Run(async () =>
+            {
+                await ConfigurationService.SaveSettingsAsync();
+                await GitHubReadmeService.PreCacheReadmeAsync(language);
+            });
+        }
+    }
+
     public static void ChangeLanguage(string language)
     {
-        Instance.CurrentLanguage = language;
+        _ = ChangeLanguageAsync(language);
     }
 
     protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
