@@ -48,5 +48,5 @@ By using FikaLauncher, you understand and accept that:
 
 ---
 
-*By using FikaLauncher, you acknowledge these terms and understand the separation between the launcher and other
-projects.*
+_By using FikaLauncher, you acknowledge these terms and understand the separation between the launcher and other
+projects._
