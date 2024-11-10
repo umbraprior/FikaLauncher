@@ -8,7 +8,7 @@ namespace FikaLauncher.Services;
 public static class FileSystemService
 {
     private static readonly string AppName = "FikaLauncher";
-    
+
     public static string AppDataDirectory { get; private set; } = string.Empty;
     public static string TempDirectory { get; private set; } = string.Empty;
     public static string LogsDirectory { get; private set; } = string.Empty;
@@ -20,7 +20,7 @@ public static class FileSystemService
         try
         {
             Console.WriteLine("Initializing FileSystemService...");
-            
+
             AppDataDirectory = GetPlatformSpecificAppDataPath();
 
             TempDirectory = Path.Combine(AppDataDirectory, "temp");
@@ -29,7 +29,7 @@ public static class FileSystemService
             CacheDirectory = Path.Combine(AppDataDirectory, "cache");
 
             EnsureDirectoriesExist();
-            
+
             Console.WriteLine($"FileSystemService initialized successfully.");
             Console.WriteLine($"AppData Directory: {AppDataDirectory}");
         }
@@ -53,7 +53,7 @@ public static class FileSystemService
         else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
             Console.WriteLine("Detected OS: Linux");
-            string homeDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            var homeDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
             return Path.Combine(homeDir, ".local", "share", AppName);
         }
         else
@@ -74,13 +74,11 @@ public static class FileSystemService
         };
 
         foreach (var directory in directories)
-        {
             if (!Directory.Exists(directory))
             {
                 Console.WriteLine($"Creating directory: {directory}");
                 Directory.CreateDirectory(directory);
             }
-        }
     }
 
     public static void CleanTempDirectory()
@@ -106,17 +104,15 @@ public static class FileSystemService
             if (Directory.Exists(CacheDirectory))
             {
                 foreach (var file in Directory.GetFiles(CacheDirectory))
-                {
                     try
                     {
                         GC.Collect();
                         GC.WaitForPendingFinalizers();
-                        
-                        File.SetAttributes(file, FileAttributes.Normal);
-                        
 
-                        for (int i = 0; i < 3; i++)
-                        {
+                        File.SetAttributes(file, FileAttributes.Normal);
+
+
+                        for (var i = 0; i < 3; i++)
                             try
                             {
                                 File.Delete(file);
@@ -126,16 +122,13 @@ public static class FileSystemService
                             {
                                 Thread.Sleep(100);
                             }
-                        }
                     }
                     catch (Exception ex)
                     {
                         Console.WriteLine($"Failed to delete file {file}: {ex.Message}");
                     }
-                }
 
                 foreach (var dir in Directory.GetDirectories(CacheDirectory))
-                {
                     try
                     {
                         Directory.Delete(dir, true);
@@ -144,7 +137,6 @@ public static class FileSystemService
                     {
                         Console.WriteLine($"Failed to delete directory {dir}: {ex.Message}");
                     }
-                }
             }
 
             Directory.CreateDirectory(CacheDirectory);

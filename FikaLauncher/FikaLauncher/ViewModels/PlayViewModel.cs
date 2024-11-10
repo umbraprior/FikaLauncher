@@ -33,26 +33,22 @@ public partial class PlayViewModel : ViewModelBase
     private const string DEFAULT_ADDRESS = "127.0.0.1";
 
 
-    [ObservableProperty]
-    private bool _isConnecting;
+    [ObservableProperty] private bool _isConnecting;
 
-    [ObservableProperty]
-    private string _serverAddress = DEFAULT_ADDRESS;
+    [ObservableProperty] private string _serverAddress = DEFAULT_ADDRESS;
 
-    [ObservableProperty]
-    private string _serverPort = "6969";
+    [ObservableProperty] private string _serverPort = "6969";
 
-    [ObservableProperty]
-    private string _fullServerAddress = string.Empty;
+    [ObservableProperty] private string _fullServerAddress = string.Empty;
 
     partial void OnServerPortChanged(string value)
     {
-        if (int.TryParse(value, out int port) && port >= 1 && port <= 9999)
+        if (int.TryParse(value, out var port) && port >= 1 && port <= 9999)
         {
             ServerPort = port.ToString();
             UpdateCurrentBookmark();
             FullServerAddress = $"{ServerAddress}:{value}";
-            
+
             var state = ApplicationStateService.GetCurrentState();
             state.LastServerPort = value;
             ApplicationStateService.SaveState();
@@ -63,27 +59,22 @@ public partial class PlayViewModel : ViewModelBase
         }
     }
 
-    [ObservableProperty]
-    private bool _isLoggedIn;
+    [ObservableProperty] private bool _isLoggedIn;
 
-    [ObservableProperty]
-    private string _currentUsername = string.Empty;
+    [ObservableProperty] private string _currentUsername = string.Empty;
 
-    [ObservableProperty]
-    private string _greetingPrefix = string.Empty;
+    [ObservableProperty] private string _greetingPrefix = string.Empty;
 
-    [ObservableProperty]
-    private string _greetingSuffix = string.Empty;
+    [ObservableProperty] private string _greetingSuffix = string.Empty;
 
-    [ObservableProperty]
-    private bool _isLocalhost;
+    [ObservableProperty] private bool _isLocalhost;
 
     partial void OnServerAddressChanged(string value)
     {
         IsLocalhost = value == DEFAULT_ADDRESS;
         UpdateCurrentBookmark();
         FullServerAddress = $"{value}:{ServerPort}";
-        
+
         var state = ApplicationStateService.GetCurrentState();
         state.LastServerAddress = value;
         ApplicationStateService.SaveState();
@@ -93,7 +84,7 @@ public partial class PlayViewModel : ViewModelBase
     {
         IsLoggedIn = AuthService.IsLoggedIn;
         CurrentUsername = AuthService.CurrentUsername;
-        
+
         if (IsLoggedIn && !string.IsNullOrEmpty(CurrentUsername))
         {
             var (prefix, suffix) = ApplicationStateService.GetOrUpdateGreeting(CurrentUsername);
@@ -120,11 +111,11 @@ public partial class PlayViewModel : ViewModelBase
     {
         AuthService.AuthStateChanged += OnAuthStateChanged;
         AuthService.CurrentUsernameChanged += OnCurrentUsernameChanged;
-        
+
         var state = ApplicationStateService.GetCurrentState();
         ServerAddress = state.LastServerAddress;
         ServerPort = state.LastServerPort;
-        
+
         UpdateLoginState();
         IsLocalhost = ServerAddress == DEFAULT_ADDRESS;
         LoadBookmarks();
@@ -148,78 +139,29 @@ public partial class PlayViewModel : ViewModelBase
         _view = view;
         UpdateLoginState();
     }
-    
+
 
     [RelayCommand]
     private async Task ConnectToServer()
     {
         if (string.IsNullOrWhiteSpace(ServerAddress))
         {
-            if (App.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop)
-            {
-                if (desktop.MainWindow?.DataContext is MainViewModel mainViewModel)
-                {
-                    mainViewModel.ShowNotification(
-                        Localizer.Get("Error"), 
-                        Localizer.Get("ServerAddressEmpty"), 
-                        NotificationType.Error);
-                }
-            }
+            NotificationController.ShowError(Localizer.Get("ServerAddressEmpty"));
             return;
         }
-        
+
         IsConnecting = true;
-        
+
         try
         {
             await Task.Delay(3000);
-            
             IsConnected = true;
-            
-            if (App.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-            {
-                if (desktop.MainWindow?.DataContext is MainViewModel mainViewModel)
-                {
-                    if (IsLocalhost)
-                    {
-                        mainViewModel.ShowNotification(
-                            Localizer.Get("Success"), 
-                            Localizer.Get("ServerStarted"), 
-                            NotificationType.Success);
-                    }
-                    else
-                    {
-                        mainViewModel.ShowNotification(
-                            Localizer.Get("Success"), 
-                            Localizer.Get("Connected"), 
-                            NotificationType.Success);
-                    }
-                }
-            }
+            NotificationController.ShowConnectionSuccess(IsLocalhost);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             IsConnected = false;
-            if (App.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-            {
-                if (desktop.MainWindow?.DataContext is MainViewModel mainViewModel)
-                {
-                    if (IsLocalhost)
-                    {
-                        mainViewModel.ShowNotification(
-                            Localizer.Get("Error"), 
-                            Localizer.Get("ServerStartFailed"), 
-                            NotificationType.Error);
-                    }
-                    else
-                    {
-                        mainViewModel.ShowNotification(
-                            Localizer.Get("Error"), 
-                            Localizer.Get("ConnectionFailed"), 
-                            NotificationType.Error);
-                    }
-                }
-            }
+            NotificationController.ShowConnectionError(IsLocalhost);
         }
         finally
         {
@@ -231,43 +173,26 @@ public partial class PlayViewModel : ViewModelBase
     private void DisconnectFromServer()
     {
         IsConnected = false;
-        
+
         if (App.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-        {
             if (desktop.MainWindow?.DataContext is MainViewModel mainViewModel)
             {
                 if (IsLocalhost)
-                {
-                    mainViewModel.ShowNotification(
-                        Localizer.Get("Success"), 
-                        Localizer.Get("ServerShutdown"), 
-                        NotificationType.Error);
-                }
+                    NotificationController.ShowServerShutdown();
                 else
-                {
-                    mainViewModel.ShowNotification(
-                        Localizer.Get("Success"), 
-                        Localizer.Get("Disconnected"), 
-                        NotificationType.Warning);
-                }
+                    NotificationController.ShowDisconnected();
             }
-        }
     }
 
-    [ObservableProperty]
-    private bool _isConnected;
+    [ObservableProperty] private bool _isConnected;
 
-    [ObservableProperty]
-    private bool _isConnectedToLocalhost;
+    [ObservableProperty] private bool _isConnectedToLocalhost;
 
     partial void OnIsConnectedChanged(bool value)
     {
         UpdateCanConnect();
         IsConnectedToLocalhost = value && IsLocalhost;
-        if (value)
-        {
-            CheckIfServerIsBookmarked();
-        }
+        if (value) CheckIfServerIsBookmarked();
         OnPropertyChanged(nameof(IsEnabled));
     }
 
@@ -288,31 +213,27 @@ public partial class PlayViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsEnabled));
     }
 
-    [ObservableProperty]
-    private bool _canConnect = true;
+    [ObservableProperty] private bool _canConnect = true;
 
     private IAsyncRelayCommand? _openLoginDialogCommand;
-    public IAsyncRelayCommand OpenLoginDialogCommand => 
+
+    public IAsyncRelayCommand OpenLoginDialogCommand =>
         _openLoginDialogCommand ??= new AsyncRelayCommand(OpenLoginDialogAsync);
 
     private async Task OpenLoginDialogAsync()
     {
         var dialogResult = await DialogService.ShowDialog<LoginDialogView>(new LoginDialogViewModel());
-        
+
         if (dialogResult is bool result && result)
         {
             UpdateLoginState();
-            
+
             if (App.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-            {
                 if (desktop.MainWindow?.DataContext is MainViewModel mainViewModel)
-                {
                     mainViewModel.ShowNotification(
                         Localizer.Get("Success"),
                         Localizer.Get("LoggedIn"),
                         NotificationType.Success);
-                }
-            }
         }
     }
 
@@ -322,20 +243,15 @@ public partial class PlayViewModel : ViewModelBase
         AuthService.Logout();
 
         if (App.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-        {
             if (desktop.MainWindow?.DataContext is MainViewModel mainViewModel)
-            {
                 mainViewModel.ShowNotification(
                     Localizer.Get("Success"),
                     Localizer.Get("LoggedOut"),
                     NotificationType.Information);
-            }
-        }
     }
 
 
-    [ObservableProperty]
-    private ObservableCollection<ServerBookmarkEntity> _bookmarks = new();
+    [ObservableProperty] private ObservableCollection<ServerBookmarkEntity> _bookmarks = new();
 
     private async void LoadBookmarks()
     {
@@ -348,14 +264,14 @@ public partial class PlayViewModel : ViewModelBase
         using var context = new AppDbContext();
         var currentUser = await context.Users
             .FirstOrDefaultAsync(u => u.Username == AuthService.CurrentUsername);
-        
+
         if (currentUser != null)
         {
             var bookmarks = await context.ServerBookmarks
                 .Where(b => b.UserId == currentUser.Id)
                 .OrderBy(b => b.CreatedAt)
                 .ToListAsync();
-                
+
             Bookmarks = new ObservableCollection<ServerBookmarkEntity>(bookmarks);
         }
         else
@@ -364,13 +280,12 @@ public partial class PlayViewModel : ViewModelBase
         }
     }
 
-    [ObservableProperty]
-    private bool _isCurrentServerBookmarked;
+    [ObservableProperty] private bool _isCurrentServerBookmarked;
 
     private void CheckIfServerIsBookmarked()
     {
-        IsCurrentServerBookmarked = Bookmarks.Any(b => 
-            b.ServerAddress == ServerAddress && 
+        IsCurrentServerBookmarked = Bookmarks.Any(b =>
+            b.ServerAddress == ServerAddress &&
             b.ServerPort.ToString() == ServerPort);
     }
 
@@ -384,8 +299,7 @@ public partial class PlayViewModel : ViewModelBase
         }
     }
 
-    [ObservableProperty]
-    private string _newBookmarkName = string.Empty;
+    [ObservableProperty] private string _newBookmarkName = string.Empty;
 
     private Button? _bookmarkButton;
 
@@ -394,8 +308,7 @@ public partial class PlayViewModel : ViewModelBase
         _bookmarkButton = button;
     }
 
-    [ObservableProperty]
-    private ServerBookmarkEntity? _editingBookmark;
+    [ObservableProperty] private ServerBookmarkEntity? _editingBookmark;
 
     private System.Timers.Timer? _flyoutTimer;
 
@@ -407,10 +320,7 @@ public partial class PlayViewModel : ViewModelBase
         _flyoutTimer = new System.Timers.Timer(1200);
         _flyoutTimer.Elapsed += (s, e) =>
         {
-            if (_bookmarkButton?.Flyout is Flyout flyout)
-            {
-                Dispatcher.UIThread.Post(() => flyout.Hide());
-            }
+            if (_bookmarkButton?.Flyout is Flyout flyout) Dispatcher.UIThread.Post(() => flyout.Hide());
             _flyoutTimer?.Dispose();
             _flyoutTimer = null;
         };
@@ -435,7 +345,7 @@ public partial class PlayViewModel : ViewModelBase
         using var context = new AppDbContext();
         var currentUser = await context.Users
             .FirstOrDefaultAsync(u => u.Username == AuthService.CurrentUsername);
-        
+
         if (currentUser == null)
             return;
 
@@ -454,39 +364,23 @@ public partial class PlayViewModel : ViewModelBase
         {
             context.ServerBookmarks.Add(bookmark);
             await context.SaveChangesAsync();
-            
+
             Bookmarks.Add(bookmark);
             IsCurrentServerBookmarked = true;
             EditingBookmark = bookmark;
 
-            if (App.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-            {
-                if (desktop.MainWindow?.DataContext is MainViewModel mainViewModel)
-                {
-                    mainViewModel.ShowNotification(
-                        Localizer.Get("Success"),
-                        Localizer.Get("BookmarkAdded"),
-                        NotificationType.Information);
-                }
-            }
+            NotificationController.ShowBookmarkAdded();
         }
         catch (DbUpdateException)
         {
             if (App.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-            {
                 if (desktop.MainWindow?.DataContext is MainViewModel mainViewModel)
-                {
                     mainViewModel.ShowNotification(
                         Localizer.Get("Error"),
                         Localizer.Get("BookmarkAlreadyExists"),
                         NotificationType.Error);
-                }
-            }
-            
-            if (_bookmarkButton?.Flyout is Flyout flyout)
-            {
-                flyout.Hide();
-            }
+
+            if (_bookmarkButton?.Flyout is Flyout flyout) flyout.Hide();
         }
     }
 
@@ -507,24 +401,15 @@ public partial class PlayViewModel : ViewModelBase
         {
             entity.UpdateBookmarkName(NewBookmarkName.Trim());
             await context.SaveChangesAsync();
-            
+
             var index = Bookmarks.IndexOf(EditingBookmark);
             if (index != -1)
             {
                 EditingBookmark.BookmarkName = NewBookmarkName.Trim();
                 Bookmarks[index] = EditingBookmark;
             }
-            
-            if (App.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-            {
-                if (desktop.MainWindow?.DataContext is MainViewModel mainViewModel)
-                {
-                    mainViewModel.ShowNotification(
-                        Localizer.Get("Info"),
-                        Localizer.Get("BookmarkRenamed"),
-                        NotificationType.Information);
-                }
-            }
+
+            NotificationController.ShowBookmarkEditSuccess();
         }
 
         flyout?.Hide();
@@ -533,34 +418,24 @@ public partial class PlayViewModel : ViewModelBase
     [RelayCommand]
     private async Task UnbookmarkCurrentServer()
     {
-        var bookmark = Bookmarks.FirstOrDefault(b => 
-            b.ServerAddress == ServerAddress && 
+        var bookmark = Bookmarks.FirstOrDefault(b =>
+            b.ServerAddress == ServerAddress &&
             b.ServerPort.ToString() == ServerPort);
-        
+
         if (bookmark != null)
         {
             using var context = new AppDbContext();
             context.ServerBookmarks.Remove(bookmark);
             await context.SaveChangesAsync();
-            
+
             Bookmarks.Remove(bookmark);
             IsCurrentServerBookmarked = false;
 
-            if (App.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-            {
-                if (desktop.MainWindow?.DataContext is MainViewModel mainViewModel)
-                {
-                    mainViewModel.ShowNotification(
-                        Localizer.Get("Info"),
-                        Localizer.Get("BookmarkRemoved"),
-                        NotificationType.Information);
-                }
-            }
+            NotificationController.ShowBookmarkRemoved();
         }
     }
 
-    [ObservableProperty]
-    private ServerBookmarkEntity? _currentBookmark;
+    [ObservableProperty] private ServerBookmarkEntity? _currentBookmark;
 
     partial void OnCurrentBookmarkChanged(ServerBookmarkEntity? value)
     {
@@ -573,8 +448,8 @@ public partial class PlayViewModel : ViewModelBase
 
     private void UpdateCurrentBookmark()
     {
-        CurrentBookmark = Bookmarks.FirstOrDefault(b => 
-            b.ServerAddress == ServerAddress && 
+        CurrentBookmark = Bookmarks.FirstOrDefault(b =>
+            b.ServerAddress == ServerAddress &&
             b.ServerPort.ToString() == ServerPort);
     }
 
@@ -582,13 +457,9 @@ public partial class PlayViewModel : ViewModelBase
     private void EditBookmark(ServerBookmarkEntity bookmark)
     {
         foreach (var other in Bookmarks)
-        {
             if (other != bookmark)
-            {
                 other.IsEditing = false;
-            }
-        }
-        
+
         bookmark.IsEditing = true;
     }
 
@@ -596,11 +467,8 @@ public partial class PlayViewModel : ViewModelBase
     private async Task SaveBookmarkName(ServerBookmarkEntity bookmark)
     {
         bookmark.IsEditing = false;
-        
-        if (string.IsNullOrWhiteSpace(bookmark.BookmarkName))
-        {
-            return;
-        }
+
+        if (string.IsNullOrWhiteSpace(bookmark.BookmarkName)) return;
 
         using var context = new AppDbContext();
         var entity = await context.ServerBookmarks.FindAsync(bookmark.Id);
@@ -608,24 +476,15 @@ public partial class PlayViewModel : ViewModelBase
         {
             entity.UpdateBookmarkName(bookmark.BookmarkName);
             await context.SaveChangesAsync();
-            
+
             var index = Bookmarks.IndexOf(bookmark);
             if (index != -1)
             {
                 Bookmarks[index] = bookmark;
                 UpdateCurrentBookmark();
             }
-            
-            if (App.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-            {
-                if (desktop.MainWindow?.DataContext is MainViewModel mainViewModel)
-                {
-                    mainViewModel.ShowNotification(
-                        Localizer.Get("Info"),
-                        Localizer.Get("BookmarkRenamed"),
-                        NotificationType.Information);
-                }
-            }
+
+            NotificationController.ShowBookmarkEditSuccess();
         }
     }
 
@@ -635,20 +494,11 @@ public partial class PlayViewModel : ViewModelBase
         using var context = new AppDbContext();
         context.ServerBookmarks.Remove(bookmark);
         await context.SaveChangesAsync();
-        
+
         Bookmarks.Remove(bookmark);
         UpdateCurrentBookmark();
-        
-        if (App.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-        {
-            if (desktop.MainWindow?.DataContext is MainViewModel mainViewModel)
-            {
-                mainViewModel.ShowNotification(
-                    Localizer.Get("Info"),
-                    Localizer.Get("BookmarkRemoved"),
-                    NotificationType.Information);
-            }
-        }
+
+        NotificationController.ShowBookmarkRemoved();
     }
 
     [RelayCommand]
@@ -670,14 +520,14 @@ public partial class PlayViewModel : ViewModelBase
         using var context = new AppDbContext();
         var currentUser = await context.Users
             .FirstOrDefaultAsync(u => u.Username == AuthService.CurrentUsername);
-        
+
         if (currentUser != null)
         {
             var bookmarks = await context.ServerBookmarks
                 .Where(b => b.UserId == currentUser.Id)
                 .OrderBy(b => b.CreatedAt)
                 .ToListAsync();
-                
+
             Bookmarks = new ObservableCollection<ServerBookmarkEntity>(bookmarks);
         }
         else

@@ -16,11 +16,11 @@ public class LocalizationService : INotifyPropertyChanged
 {
     private static readonly LocalizationService _instance = new();
     public static LocalizationService Instance => _instance;
-    
+
     public event PropertyChangedEventHandler? PropertyChanged;
 
     private string _currentLanguage = "en-US";
-    
+
     public string CurrentLanguage
     {
         get => _currentLanguage;
@@ -30,10 +30,10 @@ public class LocalizationService : INotifyPropertyChanged
             {
                 _currentLanguage = value;
                 Localizer.Language = value;
-                
+
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(Localizer.Languages));
-                
+
                 Dispatcher.UIThread.Post(() =>
                 {
                     if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
@@ -66,7 +66,7 @@ public class LocalizationService : INotifyPropertyChanged
         {
             ConfigurationService.Settings.Language = language;
             Instance.CurrentLanguage = language;
-            
+
             await Task.Run(async () =>
             {
                 await ConfigurationService.SaveSettingsAsync();

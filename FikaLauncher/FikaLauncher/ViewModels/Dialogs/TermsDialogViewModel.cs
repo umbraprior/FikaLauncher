@@ -17,70 +17,51 @@ namespace FikaLauncher.ViewModels.Dialogs;
 
 public partial class TermsDialogViewModel : ViewModelBase
 {
-    [ObservableProperty]
-    private string _termsHtml = string.Empty;
+    [ObservableProperty] private string _termsHtml = string.Empty;
 
-    [ObservableProperty]
-    private bool _hasReadLauncherTerms;
+    [ObservableProperty] private bool _hasReadLauncherTerms;
 
-    [ObservableProperty]
-    private bool _hasAcceptedLauncherTerms;
+    [ObservableProperty] private bool _hasAcceptedLauncherTerms;
 
-    [ObservableProperty]
-    private bool _hasReadFikaTerms;
+    [ObservableProperty] private bool _hasReadFikaTerms;
 
-    [ObservableProperty]
-    private bool _hasAcceptedFikaTerms;
+    [ObservableProperty] private bool _hasAcceptedFikaTerms;
 
-    [ObservableProperty]
-    private bool _canContinue;
+    [ObservableProperty] private bool _canContinue;
 
-    [ObservableProperty]
-    private bool _isLauncherTerms = true;
+    [ObservableProperty] private bool _isLauncherTerms = true;
 
-    [ObservableProperty]
-    private bool _hasReadTerms;
+    [ObservableProperty] private bool _hasReadTerms;
 
 
-    [ObservableProperty]
-    private string _continueButtonText;
+    [ObservableProperty] private string _continueButtonText;
 
-    [ObservableProperty]
-    private bool _forceReload;
+    [ObservableProperty] private bool _forceReload;
 
-    [ObservableProperty]
-    private Material.Icons.MaterialIconKind _themeIcon;
+    [ObservableProperty] private Material.Icons.MaterialIconKind _themeIcon;
 
-    [ObservableProperty]
-    private string _themeTooltip;
+    [ObservableProperty] private string _themeTooltip;
 
-    [ObservableProperty]
-    private bool _hasScrolledToEnd;
+    [ObservableProperty] private bool _hasScrolledToEnd;
 
-    [ObservableProperty]
-    private bool _hasAcceptedCurrentTerms;
+    [ObservableProperty] private bool _hasAcceptedCurrentTerms;
 
-    [ObservableProperty]
-    private string _language = LocalizationService.Instance.CurrentLanguage;
+    [ObservableProperty] private string _language = LocalizationService.Instance.CurrentLanguage;
 
     public TermsDialogViewModel()
     {
         ApplicationStateService.LoadState();
         var state = ApplicationStateService.GetCurrentState();
-        Console.WriteLine($"Initial state - Launcher: {state.HasAcceptedLauncherTerms}, Fika: {state.HasAcceptedFikaTerms}");
-        
+        Console.WriteLine(
+            $"Initial state - Launcher: {state.HasAcceptedLauncherTerms}, Fika: {state.HasAcceptedFikaTerms}");
+
         HasAcceptedLauncherTerms = state.HasAcceptedLauncherTerms;
         HasAcceptedFikaTerms = state.HasAcceptedFikaTerms;
-        
+
         if (!HasAcceptedLauncherTerms)
-        {
             IsLauncherTerms = true;
-        }
-        else if (!HasAcceptedFikaTerms)
-        {
-            IsLauncherTerms = false;
-        }
-        
+        else if (!HasAcceptedFikaTerms) IsLauncherTerms = false;
+
         LoadTerms();
         UpdateThemeIcon();
         UpdateContinueButtonText();
@@ -92,10 +73,10 @@ public partial class TermsDialogViewModel : ViewModelBase
         var isDark = App.Current?.RequestedThemeVariant == Avalonia.Styling.ThemeVariant.Dark;
         TermsHtml = TermsService.GetProcessedTerms(isDark, IsLauncherTerms);
         ForceReload = !ForceReload;
-        
+
         HasReadTerms = false;
         HasAcceptedCurrentTerms = false;
-        
+
         if (App.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             var mainWindow = desktop.MainWindow;
@@ -104,7 +85,7 @@ public partial class TermsDialogViewModel : ViewModelBase
                 .FirstOrDefault();
             dialog?.ResetScroll();
         }
-        
+
         UpdateCanContinue();
         UpdateContinueButtonText();
     }
@@ -112,13 +93,9 @@ public partial class TermsDialogViewModel : ViewModelBase
     private void UpdateContinueButtonText()
     {
         if (IsLauncherTerms && !HasAcceptedFikaTerms)
-        {
             ContinueButtonText = "Next";
-        }
         else
-        {
             ContinueButtonText = "Get Started";
-        }
     }
 
     partial void OnHasScrolledToEndChanged(bool value)
@@ -146,7 +123,9 @@ public partial class TermsDialogViewModel : ViewModelBase
     private void UpdateThemeIcon()
     {
         var isDark = App.Current?.RequestedThemeVariant == Avalonia.Styling.ThemeVariant.Dark;
-        ThemeIcon = isDark ? Material.Icons.MaterialIconKind.WeatherNight : Material.Icons.MaterialIconKind.WeatherSunny;
+        ThemeIcon = isDark
+            ? Material.Icons.MaterialIconKind.WeatherNight
+            : Material.Icons.MaterialIconKind.WeatherSunny;
         ThemeTooltip = isDark ? "Light" : "Dark";
     }
 
@@ -157,17 +136,14 @@ public partial class TermsDialogViewModel : ViewModelBase
         ConfigurationService.Settings.IsDarkTheme = isDark;
         ConfigurationService.SaveSettings();
         App.ChangeTheme(isDark);
-        
+
         if (App.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-        {
             if (desktop.MainWindow?.DataContext is MainViewModel mainViewModel)
-            {
                 mainViewModel.UpdateLogo(isDark);
-            }
-        }
-        
+
         LoadTerms();
         UpdateThemeIcon();
+        NotificationController.ShowThemeChanged(isDark);
     }
 
     [RelayCommand]
@@ -176,14 +152,15 @@ public partial class TermsDialogViewModel : ViewModelBase
         if (!CanContinue) return;
 
         var state = ApplicationStateService.GetCurrentState();
-        Console.WriteLine($"Before save - Launcher: {state.HasAcceptedLauncherTerms}, Fika: {state.HasAcceptedFikaTerms}");
-        
+        Console.WriteLine(
+            $"Before save - Launcher: {state.HasAcceptedLauncherTerms}, Fika: {state.HasAcceptedFikaTerms}");
+
         if (IsLauncherTerms)
         {
             state.HasAcceptedLauncherTerms = true;
             ApplicationStateService.SaveState();
             Console.WriteLine("Saved launcher terms acceptance");
-            
+
             if (!HasAcceptedFikaTerms)
             {
                 IsLauncherTerms = false;
@@ -197,7 +174,7 @@ public partial class TermsDialogViewModel : ViewModelBase
             ApplicationStateService.SaveState();
             Console.WriteLine("Saved Fika terms acceptance");
         }
-        
+
         DialogService.CloseDialog(true);
     }
 
@@ -214,13 +191,9 @@ public partial class TermsDialogViewModel : ViewModelBase
     partial void OnHasAcceptedCurrentTermsChanged(bool value)
     {
         if (IsLauncherTerms)
-        {
             HasAcceptedLauncherTerms = value;
-        }
         else
-        {
             HasAcceptedFikaTerms = value;
-        }
         UpdateCanContinue();
     }
 

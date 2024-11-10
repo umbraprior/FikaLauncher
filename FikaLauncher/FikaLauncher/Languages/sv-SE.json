@@ -4,7 +4,6 @@
   "Mods": "Moddar",
   "Settings": "Inställningar",
   "About": "Om",
-
   "Language": "Programspråk:",
   "Theme": "Programtema:",
   "Light": "Ljust",
@@ -28,7 +27,6 @@
   "SptInstall": "SP-Tarkov installation:",
   "SetSpt": "Ange sökväg till befintlig SP-Tarkov-mapp",
   "DownloadEftSettings": "Ladda ner spelinställningar från EFT Live",
-  
   "Error": "Fel",
   "Success": "Lyckades",
   "Warning": "Varning",
@@ -43,19 +41,16 @@
   "ConnectionFailed": "Kunde inte ansluta till servern.",
   "Connected": "Ansluten till servern",
   "Disconnected": "Frånkopplad från servern",
-  
   "TempWarn": "Denna åtgärd kommer att ta bort alla filer i den valda katalogen, det finns inget sätt att återställa det som har raderats.",
   "SureProceed": "Är du säker på att du vill fortsätta?",
   "Cancel": "Avbryt",
   "Proceed": "Fortsätt",
-  
   "Welcome": "Välkommen tillbaka,",
   "LogOut": "Logga ut",
   "EditProfile": "Redigera profil",
   "ResetAccount": "Återställ konto",
   "Connect": "Anslut",
   "Disconnect": "Koppla från",
-  
   "AboutError": "Det gick inte att ladda dokumentationen från Github",
   "CreateAccount": "Skapa konto",
   "Login": "Logga in",

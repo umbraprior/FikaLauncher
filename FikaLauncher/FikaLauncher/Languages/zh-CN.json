@@ -4,7 +4,6 @@
   "Mods": "模组",
   "Settings": "设置",
   "About": "关于",
-
   "Language": "启动器语言：",
   "Theme": "启动器主题：",
   "Light": "明亮",
@@ -28,7 +27,6 @@
   "SptInstall": "SP-Tarkov 安装：",
   "SetSpt": "设置现有 SP-Tarkov 文件夹路径",
   "DownloadEftSettings": "从 EFT Live 下载游戏设置",
-  
   "Error": "错误",
   "Success": "成功",
   "Warning": "警告",
@@ -43,19 +41,16 @@
   "ConnectionFailed": "无法连接到服务器。",
   "Connected": "已连接到服务器",
   "Disconnected": "已断开与服务器的连接",
-  
   "TempWarn": "此操作将删除所选目录中的所有文件，删除后无法恢复。",
   "SureProceed": "确定要继续吗？",
   "Cancel": "取消",
   "Proceed": "继续",
-  
   "Welcome": "欢迎回来，",
   "LogOut": "登出",
   "EditProfile": "编辑个人资料",
   "ResetAccount": "重置账户",
   "Connect": "连接",
   "Disconnect": "断开连接",
-  
   "AboutError": "无法从 Github 加载文档",
   "CreateAccount": "创建账户",
   "Login": "登录",

@@ -20,10 +20,7 @@ public partial class MainView : UserControl
     {
         base.OnAttachedToVisualTree(e);
         var topLevel = TopLevel.GetTopLevel(this);
-        if (topLevel != null)
-        {
-            _notificationManager = new WindowNotificationManager(topLevel) { MaxItems = 3 };
-        }
+        if (topLevel != null) _notificationManager = new WindowNotificationManager(topLevel) { MaxItems = 3 };
     }
 
     public void ShowNotification(string title, string message, NotificationType type)
@@ -33,9 +30,6 @@ public partial class MainView : UserControl
 
     private void SplitView_PaneClosing(object sender, CancelRoutedEventArgs e)
     {
-        if (DataContext is MainViewModel viewModel)
-        {
-            viewModel.UpdatePaneState(false);
-        }
+        if (DataContext is MainViewModel viewModel) viewModel.UpdatePaneState(false);
     }
 }

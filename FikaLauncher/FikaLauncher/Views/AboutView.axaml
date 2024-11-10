@@ -9,7 +9,7 @@
              x:DataType="vm:AboutViewModel">
     <ScrollViewer>
         <Border Margin="25">
-            <html:HtmlPanel Text="{Binding HtmlContent}"/>
+            <html:HtmlPanel Text="{Binding HtmlContent}" />
         </Border>
     </ScrollViewer>
 </UserControl>

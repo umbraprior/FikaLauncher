@@ -10,11 +10,12 @@ using Jeek.Avalonia.Localization;
 public static class ApplicationStateService
 {
     private static readonly string StateFilePath = Path.Combine(FileSystemService.CacheDirectory, "appstate.json");
+
     private static readonly JsonSerializerOptions _jsonOptions = new()
     {
         WriteIndented = true
     };
-    
+
     private static AppState _currentState = new();
 
     public class AppState
@@ -35,10 +36,10 @@ public static class ApplicationStateService
     public static (string prefix, string suffix) GetOrUpdateGreeting(string username)
     {
         LoadState();
-        
+
         var hour = DateTime.Now.Hour;
         string greeting;
-        
+
         if (Random.Shared.NextDouble() < 0.3)
         {
             if (hour >= 5 && hour < 12)
@@ -51,16 +52,13 @@ public static class ApplicationStateService
         else
         {
             var validGreetings = new List<string>();
-            
-            for (int i = 1; i <= 18; i++)
+
+            for (var i = 1; i <= 18; i++)
             {
-                string key = $"RandomGreeting{i}";
-                string value = Localizer.Get(key);
-                
-                if (value != key)
-                {
-                    validGreetings.Add(key);
-                }
+                var key = $"RandomGreeting{i}";
+                var value = Localizer.Get(key);
+
+                if (value != key) validGreetings.Add(key);
             }
 
             if (validGreetings.Count > 0)
@@ -80,11 +78,11 @@ public static class ApplicationStateService
 
         var localizedGreeting = Localizer.Get(greeting);
         var parts = localizedGreeting.Split(new[] { "{0}" }, StringSplitOptions.None);
-        
+
         _currentState.Username = username;
         _currentState.IsLoggedIn = true;
         SaveState();
-        
+
         return (parts[0], parts.Length > 1 ? parts[1] : string.Empty);
     }
 
@@ -93,7 +91,7 @@ public static class ApplicationStateService
         try
         {
             Directory.CreateDirectory(FileSystemService.CacheDirectory);
-            
+
             if (File.Exists(StateFilePath))
             {
                 var json = File.ReadAllText(StateFilePath);
@@ -112,7 +110,7 @@ public static class ApplicationStateService
         try
         {
             Directory.CreateDirectory(FileSystemService.CacheDirectory);
-            
+
             var json = JsonSerializer.Serialize(_currentState, _jsonOptions);
             File.WriteAllText(StateFilePath, json);
         }
@@ -127,10 +125,7 @@ public static class ApplicationStateService
         _currentState = new AppState();
         try
         {
-            if (File.Exists(StateFilePath))
-            {
-                File.Delete(StateFilePath);
-            }
+            if (File.Exists(StateFilePath)) File.Delete(StateFilePath);
         }
         catch (Exception ex)
         {
@@ -141,18 +136,14 @@ public static class ApplicationStateService
     public static async Task LoadLoginState()
     {
         LoadState();
-        
-        if (_currentState.KeepLoggedIn && 
-            _currentState.IsLoggedIn && 
-            !string.IsNullOrEmpty(_currentState.Username) && 
+
+        if (_currentState.KeepLoggedIn &&
+            _currentState.IsLoggedIn &&
+            !string.IsNullOrEmpty(_currentState.Username) &&
             ConfigurationService.Settings.KeepLauncherOpen)
-        {
             if (await AuthService.ValidateAndRestoreLogin(_currentState.Username, _currentState.SecurityToken))
-            {
                 return;
-            }
-        }
-        
+
         var lastUsername = _currentState.LastLoggedInUsername;
         ClearLoginState();
         _currentState.LastLoggedInUsername = lastUsername;
@@ -175,7 +166,7 @@ public static class ApplicationStateService
         var lastUsername = _currentState.LastLoggedInUsername;
         var hasAcceptedLauncherTerms = _currentState.HasAcceptedLauncherTerms;
         var hasAcceptedFikaTerms = _currentState.HasAcceptedFikaTerms;
-        
+
         _currentState = new AppState
         {
             LastLoggedInUsername = lastUsername,

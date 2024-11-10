@@ -10,9 +10,10 @@ public static class AuthService
     public static event EventHandler<bool>? AuthStateChanged;
     public static event EventHandler<string?>? CurrentUsernameChanged;
     private static readonly Random _random = new();
-    
+
     public static bool IsLoggedIn { get; private set; }
     private static string? _currentUsername;
+
     public static string? CurrentUsername
     {
         get => _currentUsername;
@@ -25,6 +26,7 @@ public static class AuthService
             }
         }
     }
+
     public static (string Prefix, string Suffix) CurrentGreeting { get; private set; }
 
     public static void Initialize()
@@ -44,10 +46,7 @@ public static class AuthService
         else
         {
             var (success, newToken) = await DatabaseService.GenerateSecurityToken(username);
-            if (!success || newToken == null)
-            {
-                throw new InvalidOperationException("Failed to generate security token");
-            }
+            if (!success || newToken == null) throw new InvalidOperationException("Failed to generate security token");
             token = newToken;
         }
 
@@ -79,29 +78,27 @@ public static class AuthService
             AuthStateChanged?.Invoke(null, true);
             return true;
         }
+
         return false;
     }
 
     public static async Task Logout()
     {
-        if (!string.IsNullOrEmpty(CurrentUsername))
-        {
-            await DatabaseService.InvalidateSecurityToken(CurrentUsername);
-        }
+        if (!string.IsNullOrEmpty(CurrentUsername)) await DatabaseService.InvalidateSecurityToken(CurrentUsername);
 
         IsLoggedIn = false;
         CurrentUsername = string.Empty;
         CurrentGreeting = (string.Empty, string.Empty);
-        
+
         ApplicationStateService.ClearLoginState();
-        
+
         if (ConfigurationService.Settings.KeepLauncherOpen)
         {
             ConfigurationService.Settings.IsLoggedIn = false;
             ConfigurationService.Settings.CurrentUsername = null;
             await ConfigurationService.SaveSettingsAsync();
         }
-        
+
         AuthStateChanged?.Invoke(null, false);
     }
 }

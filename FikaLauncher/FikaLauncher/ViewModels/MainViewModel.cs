@@ -23,8 +23,7 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty] private IImage? _logoImage;
     [ObservableProperty] private double _logoWidth = 60;
     [ObservableProperty] private double _logoHeight = 60;
-    [ObservableProperty]
-    private int _closeAction = 0;
+    [ObservableProperty] private int _closeAction = 0;
 
     partial void OnLogoSourceChanged(string value)
     {
@@ -61,7 +60,7 @@ public partial class MainViewModel : ViewModelBase
     {
         CurrentPage = new PlayViewModel();
     }
-    
+
     [RelayCommand]
     private void NavigateInstall()
     {
@@ -73,7 +72,7 @@ public partial class MainViewModel : ViewModelBase
     {
         CurrentPage = new SettingsViewModel();
     }
-    
+
     [RelayCommand]
     private void NavigateAbout()
     {
@@ -82,8 +81,10 @@ public partial class MainViewModel : ViewModelBase
 
     public void UpdateLogo(bool isDarkTheme)
     {
-        var uri = new Uri(isDarkTheme ? "avares://FikaLauncher/Assets/fika-logo-light.png" : "avares://FikaLauncher/Assets/fika-logo-dark.png");
-        
+        var uri = new Uri(isDarkTheme
+            ? "avares://FikaLauncher/Assets/fika-logo-light.png"
+            : "avares://FikaLauncher/Assets/fika-logo-dark.png");
+
         try
         {
             using var stream = AssetLoader.Open(uri);
@@ -102,23 +103,18 @@ public partial class MainViewModel : ViewModelBase
         LogoHeight = isPaneOpen ? 150 : 50;
     }
 
-    [ObservableProperty]
-    private string _language = LocalizationService.Instance.CurrentLanguage;
+    [ObservableProperty] private string _language = LocalizationService.Instance.CurrentLanguage;
 
     partial void OnLanguageChanged(string value)
     {
         LocalizationService.ChangeLanguage(value);
         _ = GitHubReadmeService.PreCacheReadmeAsync(value);
     }
-    
+
     public void ShowNotification(string title, string message, NotificationType type)
     {
-        if (App.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop)
-        {
+        if (App.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             if (desktop.MainWindow is MainWindow mainWindow)
-            {
                 mainWindow.NotificationManager?.Show(new Notification(title, message, type));
-            }
-        }
     }
 }

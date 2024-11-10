@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
 
 namespace FikaLauncher.Services;
@@ -18,13 +19,14 @@ public static class GitHubReadmeService
 
     static GitHubReadmeService()
     {
-        _httpClient.DefaultRequestHeaders.UserAgent.Add(new("FikaLauncher", "1.0"));
-        _httpClient.DefaultRequestHeaders.Accept.Add(new("application/vnd.github.v3+json"));
+        _httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("FikaLauncher", "1.0"));
+        _httpClient.DefaultRequestHeaders.Accept.Add(
+            new MediaTypeWithQualityHeaderValue("application/vnd.github.v3+json"));
     }
 
     private static string GetGitHubFilePath(string language)
     {
-        return language == "en-US" 
+        return language == "en-US"
             ? "README.md"
             : $"{language.Replace("-", "_")}-README.md";
     }
@@ -35,9 +37,9 @@ public static class GitHubReadmeService
         {
             var url = $"repos/{Owner}/{Repo}/commits?path={filePath}&sha={Branch}&per_page=1";
             Console.WriteLine($"Checking GitHub API: https://api.github.com/{url}");
-            
+
             var response = await _httpClient.GetAsync(url);
-            
+
             if (!response.IsSuccessStatusCode)
             {
                 Console.WriteLine($"Failed to get commit info: {response.StatusCode}");
@@ -48,7 +50,7 @@ public static class GitHubReadmeService
             var content = await response.Content.ReadAsStringAsync();
             using var doc = System.Text.Json.JsonDocument.Parse(content);
             var root = doc.RootElement;
-            
+
             if (root.GetArrayLength() == 0)
             {
                 Console.WriteLine("No commits found for file");
@@ -95,7 +97,8 @@ public static class GitHubReadmeService
                 return true;
 
             var needsUpdate = cachedInfo.CommitHash != latestCommitHash;
-            Console.WriteLine($"Cache commit: {cachedInfo.CommitHash[..7]}, Latest commit: {latestCommitHash[..7]}, Needs update: {needsUpdate}");
+            Console.WriteLine(
+                $"Cache commit: {cachedInfo.CommitHash[..7]}, Latest commit: {latestCommitHash[..7]}, Needs update: {needsUpdate}");
             return needsUpdate;
         }
         catch (Exception ex)
@@ -125,12 +128,14 @@ public static class GitHubReadmeService
             if (response.IsSuccessStatusCode)
             {
                 var content = await response.Content.ReadAsStringAsync();
-                Console.WriteLine($"Successfully downloaded content (length: {content.Length}, commit: {commitHash[..7]})");
-                
-                await ReadmeCacheService.SaveToCache(content, ReadmeCacheService.GetCacheFilePath(language), commitHash, commitDate.Value);
+                Console.WriteLine(
+                    $"Successfully downloaded content (length: {content.Length}, commit: {commitHash[..7]})");
+
+                await ReadmeCacheService.SaveToCache(content, ReadmeCacheService.GetCacheFilePath(language), commitHash,
+                    commitDate.Value);
                 return content;
             }
-            
+
             Console.WriteLine($"Download failed with status: {response.StatusCode}");
             return null;
         }
@@ -146,7 +151,7 @@ public static class GitHubReadmeService
         var filePath = GetGitHubFilePath(language);
         var url = $"repos/{Owner}/{Repo}/contents/{filePath}?ref={Branch}";
         Console.WriteLine($"Checking file exists: https://api.github.com/{url}");
-        
+
         try
         {
             var response = await _httpClient.GetAsync(url);
@@ -162,7 +167,7 @@ public static class GitHubReadmeService
     {
         var currentLanguage = LocalizationService.Instance.CurrentLanguage;
         var cacheFilePath = ReadmeCacheService.GetCacheFilePath(currentLanguage);
-        
+
         Console.WriteLine($"Getting readme for language: {currentLanguage}");
 
         try
@@ -209,7 +214,7 @@ public static class GitHubReadmeService
         try
         {
             var cacheFilePath = ReadmeCacheService.GetCacheFilePath(language);
-            
+
             if (language != "en-US" && !await DoesLanguageReadmeExist(language))
             {
                 Console.WriteLine($"No readme exists for {language}, using English");
@@ -234,4 +239,3 @@ public static class GitHubReadmeService
         }
     }
 }
-

@@ -13,7 +13,7 @@ public static class ConfigurationService
         PropertyNameCaseInsensitive = true
     };
 
-    private static readonly object _saveLock = new object();
+    private static readonly object _saveLock = new();
     private static bool _isSaving = false;
 
     public static AppSettings Settings { get; private set; } = new();
@@ -21,7 +21,7 @@ public static class ConfigurationService
     static ConfigurationService()
     {
         Console.WriteLine("Initializing ConfigurationService...");
-        
+
         try
         {
             LoadSettings();
@@ -41,7 +41,7 @@ public static class ConfigurationService
     private static void LoadSettings()
     {
         var settingsPath = Path.Combine(FileSystemService.SettingsDirectory, "settings.json");
-        
+
         if (File.Exists(settingsPath))
         {
             try
@@ -101,28 +101,23 @@ public static class ConfigurationService
     {
         if (_isSaving) return;
 
-        await Task.Run(() =>
-        {
-            SaveSettings();
-        });
+        await Task.Run(() => { SaveSettings(); });
     }
 
     private static void EnsureDefaultFiles()
     {
         var logPath = Path.Combine(FileSystemService.LogsDirectory, "app.log");
-        if (!File.Exists(logPath))
-        {
-            File.WriteAllText(logPath, $"Log file created: {DateTime.Now}\n");
-        }
+        if (!File.Exists(logPath)) File.WriteAllText(logPath, $"Log file created: {DateTime.Now}\n");
     }
 
     private static async void ApplySettings()
     {
         LocalizationService.ChangeLanguage(Settings.Language);
-        
+
         App.ChangeTheme(Settings.IsDarkTheme);
-        
-        Console.WriteLine($"Applied settings - Language: {Settings.Language}, Theme: {(Settings.IsDarkTheme ? "Dark" : "Light")}");
+
+        Console.WriteLine(
+            $"Applied settings - Language: {Settings.Language}, Theme: {(Settings.IsDarkTheme ? "Dark" : "Light")}");
 
         await GitHubReadmeService.PreCacheReadmeAsync(Settings.Language);
     }
@@ -142,5 +137,4 @@ public class AppSettings
     public string SptInstallPath { get; set; } = string.Empty;
     public int CloseWindowBehavior { get; set; } = 0;
     public int LaunchGameBehavior { get; set; } = 0;
-
 }

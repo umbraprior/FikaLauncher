@@ -10,20 +10,14 @@ namespace FikaLauncher.Database;
 [Table("ServerBookmarks")]
 public class ServerBookmarkEntity : INotifyPropertyChanged
 {
-    [Key]
-    public int Id { get; set; }
-    
-    [Required]
-    public int UserId { get; set; }
-    
-    [Required]
-    [MaxLength(255)]
-    public string ServerAddress { get; set; } = string.Empty;
-    
-    [Required]
-    [Range(1, 65535)]
-    public int ServerPort { get; set; }
-    
+    [Key] public int Id { get; set; }
+
+    [Required] public int UserId { get; set; }
+
+    [Required] [MaxLength(255)] public string ServerAddress { get; set; } = string.Empty;
+
+    [Required] [Range(1, 65535)] public int ServerPort { get; set; }
+
     private string? _bookmarkName;
 
     [MaxLength(50)]
@@ -44,15 +38,13 @@ public class ServerBookmarkEntity : INotifyPropertyChanged
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     [NotMapped]
-    public string DisplayName => !string.IsNullOrWhiteSpace(BookmarkName) 
-        ? BookmarkName 
+    public string DisplayName => !string.IsNullOrWhiteSpace(BookmarkName)
+        ? BookmarkName
         : FullServerAddress;
 
-    [NotMapped]
-    public string FullServerAddress => $"{ServerAddress}:{ServerPort}";
-    
-    [ForeignKey("UserId")]
-    public UserEntity User { get; set; } = null!;
+    [NotMapped] public string FullServerAddress => $"{ServerAddress}:{ServerPort}";
+
+    [ForeignKey("UserId")] public UserEntity User { get; set; } = null!;
 
     private bool _isEditing;
 
@@ -65,18 +57,14 @@ public class ServerBookmarkEntity : INotifyPropertyChanged
             if (_isEditing != value)
             {
                 _isEditing = value;
-                if (value)
-                {
-                    ShouldFocus = true;
-                }
+                if (value) ShouldFocus = true;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(ShouldFocus));
             }
         }
     }
 
-    [NotMapped]
-    public bool ShouldFocus { get; set; }
+    [NotMapped] public bool ShouldFocus { get; set; }
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -88,10 +76,8 @@ public class ServerBookmarkEntity : INotifyPropertyChanged
     public static ServerBookmarkEntity FromFullAddress(string fullAddress, int userId, string? bookmarkName = null)
     {
         var parts = fullAddress.Split(':');
-        if (parts.Length != 2 || !int.TryParse(parts[1], out int port))
-        {
+        if (parts.Length != 2 || !int.TryParse(parts[1], out var port))
             throw new ArgumentException("Invalid server address format. Expected format: address:port");
-        }
 
         return new ServerBookmarkEntity
         {
@@ -104,14 +90,14 @@ public class ServerBookmarkEntity : INotifyPropertyChanged
 
     public void UpdateBookmarkName(string? newName)
     {
-        BookmarkName = !string.IsNullOrWhiteSpace(newName) 
-            ? newName.Trim() 
+        BookmarkName = !string.IsNullOrWhiteSpace(newName)
+            ? newName.Trim()
             : null;
     }
 
     public bool IsValid()
     {
-        return !string.IsNullOrWhiteSpace(ServerAddress) && 
+        return !string.IsNullOrWhiteSpace(ServerAddress) &&
                ServerPort is >= 1 and <= 65535 &&
                (BookmarkName == null || BookmarkName.Length <= 50);
     }

@@ -49,14 +49,12 @@ public static class ReadmeCacheService
         try
         {
             Console.WriteLine($"Saving content to cache: {cacheFilePath}");
-            
+
             if (File.Exists(cacheFilePath))
             {
                 var fileInfo = new FileInfo(cacheFilePath);
                 if ((fileInfo.Attributes & FileAttributes.ReadOnly) == FileAttributes.ReadOnly)
-                {
                     fileInfo.Attributes &= ~FileAttributes.ReadOnly;
-                }
             }
 
             await File.WriteAllTextAsync(cacheFilePath, content);
@@ -73,15 +71,13 @@ public static class ReadmeCacheService
             {
                 var infoFile = new FileInfo(infoPath);
                 if ((infoFile.Attributes & FileAttributes.ReadOnly) == FileAttributes.ReadOnly)
-                {
                     infoFile.Attributes &= ~FileAttributes.ReadOnly;
-                }
             }
 
             var json = JsonSerializer.Serialize(readmeInfo);
             await File.WriteAllTextAsync(infoPath, json);
             File.SetAttributes(infoPath, File.GetAttributes(infoPath) | FileAttributes.ReadOnly);
-            
+
             Console.WriteLine($"Successfully saved to cache (commit: {commitHash[..7]})");
         }
         catch (Exception ex)

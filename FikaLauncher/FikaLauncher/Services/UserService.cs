@@ -13,16 +13,16 @@ public static class UserService
     {
         if (string.IsNullOrWhiteSpace(username))
             return (false, "Username cannot be empty");
-            
+
         if (username.Length < 3)
             return (false, "Username must be at least 3 characters long");
-            
+
         if (username.Length > 20)
             return (false, "Username must be less than 20 characters");
-            
+
         if (!username.All(c => char.IsLetterOrDigit(c) || c == '_' || c == '-'))
             return (false, "Username can only contain letters, numbers, underscores, and hyphens");
-            
+
         return (true, string.Empty);
     }
 
@@ -30,19 +30,19 @@ public static class UserService
     {
         if (string.IsNullOrWhiteSpace(password))
             return (false, "Password cannot be empty");
-            
+
         if (password.Length < 8)
             return (false, "Password must be at least 8 characters long");
-            
+
         if (!password.Any(char.IsUpper))
             return (false, "Password must contain at least one uppercase letter");
-            
+
         if (!password.Any(char.IsLower))
             return (false, "Password must contain at least one lowercase letter");
-            
+
         if (!password.Any(char.IsDigit))
             return (false, "Password must contain at least one number");
-            
+
         return (true, string.Empty);
     }
 
@@ -52,7 +52,7 @@ public static class UserService
             return false;
 
         username = username.ToLower();
-        
+
         try
         {
             using var context = new AppDbContext();
@@ -76,16 +76,16 @@ public static class UserService
             return (false, null, passwordError);
 
         username = username.ToLower();
-        
+
         try
         {
             using var context = new AppDbContext();
-            
+
             if (await context.Users.AnyAsync(u => u.Username == username))
                 return (false, null, "Username already exists");
 
             var encryptedPassword = DatabaseService.EncryptPassword(password);
-            
+
             var user = new UserEntity
             {
                 Username = username,
@@ -94,16 +94,13 @@ public static class UserService
                 LastLoginAt = DateTime.UtcNow,
                 IsActive = true
             };
-            
+
             context.Users.Add(user);
             await context.SaveChangesAsync();
 
             var (tokenSuccess, token) = await DatabaseService.GenerateSecurityToken(username);
-            if (!tokenSuccess || token == null)
-            {
-                return (false, null, "Failed to generate security token");
-            }
-            
+            if (!tokenSuccess || token == null) return (false, null, "Failed to generate security token");
+
             return (true, token, string.Empty);
         }
         catch (Exception ex)
@@ -119,12 +116,12 @@ public static class UserService
             return false;
 
         username = username.ToLower();
-        
+
         try
         {
             using var context = new AppDbContext();
             var user = await context.Users.FirstOrDefaultAsync(u => u.Username == username);
-            
+
             if (user == null || !user.IsActive)
                 return false;
 

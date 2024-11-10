@@ -9,7 +9,7 @@ namespace FikaLauncher.Views.Dialogs;
 public partial class TermsDialogView : UserControl
 {
     private ScrollViewer? _termsScroller;
-    
+
     public TermsDialogView()
     {
         InitializeComponent();

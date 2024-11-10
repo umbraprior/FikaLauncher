@@ -5,6 +5,4 @@ namespace FikaLauncher.ViewModels;
 
 public partial class InstallViewModel : ViewModelBase
 {
-
 }
-

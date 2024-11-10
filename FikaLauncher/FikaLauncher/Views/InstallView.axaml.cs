@@ -1,13 +1,11 @@
 using Avalonia.Controls;
 
-namespace FikaLauncher.Views
+namespace FikaLauncher.Views;
+
+public partial class InstallView : UserControl
 {
-    public partial class InstallView : UserControl
+    public InstallView()
     {
-        public InstallView()
-        {
-            InitializeComponent();
-        }
+        InitializeComponent();
     }
 }
-

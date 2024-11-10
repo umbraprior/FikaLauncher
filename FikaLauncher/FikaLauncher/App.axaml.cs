@@ -17,7 +17,7 @@ namespace FikaLauncher;
 
 public partial class App : Application
 {
-    public static new App? Current => Application.Current as App;
+    public new static App? Current => Application.Current as App;
 
     public override void Initialize()
     {
@@ -32,7 +32,7 @@ public partial class App : Application
             AuthService.Initialize();
             _ = FileSystemService.AppDataDirectory;
             _ = ConfigurationService.Settings;
-            
+
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
                 BindingPlugins.DataValidators.RemoveAt(0);
@@ -68,9 +68,6 @@ public partial class App : Application
 
     public static void ChangeTheme(bool isDark)
     {
-        if (Current != null)
-        {
-            Current.RequestedThemeVariant = isDark ? ThemeVariant.Dark : ThemeVariant.Light;
-        }
+        if (Current != null) Current.RequestedThemeVariant = isDark ? ThemeVariant.Dark : ThemeVariant.Light;
     }
 }

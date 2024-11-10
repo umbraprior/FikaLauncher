@@ -7,11 +7,11 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="FikaLauncher.Views.InstallView"
              x:DataType="vm:InstallViewModel">
-  <Grid>
-      <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-        
-          <TextBlock Text="{l:Localize Install}"/>
-        
-      </StackPanel>
-  </Grid>
+    <Grid>
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+
+            <TextBlock Text="{l:Localize Install}" />
+
+        </StackPanel>
+    </Grid>
 </UserControl>

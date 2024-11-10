@@ -14,21 +14,17 @@ namespace FikaLauncher.ViewModels;
 public partial class AboutViewModel : ViewModelBase
 {
     private readonly Window? _mainWindow;
-    
-    [ObservableProperty]
-    private string _htmlContent = string.Empty;
+
+    [ObservableProperty] private string _htmlContent = string.Empty;
 
     public AboutViewModel()
     {
-        _mainWindow = App.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop 
-            ? desktop.MainWindow 
+        _mainWindow = App.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
+            ? desktop.MainWindow
             : null;
 
-        if (_mainWindow != null)
-        {
-            _mainWindow.ActualThemeVariantChanged += OnThemeChanged;
-        }
-        
+        if (_mainWindow != null) _mainWindow.ActualThemeVariantChanged += OnThemeChanged;
+
         LoadReadmeAsync();
     }
 
@@ -42,15 +38,15 @@ public partial class AboutViewModel : ViewModelBase
         try
         {
             Console.WriteLine("Starting LoadReadme");
-            
+
             var markdown = await GitHubReadmeService.GetReadmeContentAsync();
-            
+
             Console.WriteLine("Markdown content loaded from cache or GitHub");
 
             var pipeline = new MarkdownPipelineBuilder()
                 .UseAdvancedExtensions()
                 .Build();
-            
+
             Console.WriteLine("Pipeline built");
 
             var html = Markdig.Markdown.ToHtml(markdown, pipeline);
@@ -60,12 +56,12 @@ public partial class AboutViewModel : ViewModelBase
 
 
             var isDark = App.Current?.RequestedThemeVariant == ThemeVariant.Dark;
-                
+
             var (backgroundColor, textColor, headingColor, linkColor) = isDark
                 ? ("#242424", "#d4d4d4", "#ffffff", "#569cd6")
                 : ("#ebeef0", "#24292f", "#000000", "#0366d6");
 
-            var noteBlockBgColor = isDark 
+            var noteBlockBgColor = isDark
                 ? "#2d2d2d"
                 : "#dfe2e5";
 
@@ -450,7 +446,7 @@ public partial class AboutViewModel : ViewModelBase
         {
             Console.WriteLine($"Error in LoadReadme: {ex.Message}");
             Console.WriteLine($"Stack trace: {ex.StackTrace}");
-            
+
             var errorColor = App.Current?.RequestedThemeVariant == ThemeVariant.Dark ? "#f14c4c" : "#ff0000";
             HtmlContent = $@"
                 <div style='color: {errorColor}; padding: 20px;'>
@@ -473,7 +469,7 @@ public partial class AboutViewModel : ViewModelBase
                     .TrimStart('\n')
                     .TrimEnd('\n')
                     .TrimEnd();
-                
+
                 code = language switch
                 {
                     "csharp" => HighlightCSharp(code, isDark),
@@ -482,8 +478,9 @@ public partial class AboutViewModel : ViewModelBase
                     "plaintext" => $"<span class=\"plaintext\">{code}</span>",
                     _ => $"<span class=\"plaintext\">{code}</span>"
                 };
-                
-                return $"<div class=\"code-block-container\"><pre><code class=\"language-{language}\">{code}</code></pre></div>";
+
+                return
+                    $"<div class=\"code-block-container\"><pre><code class=\"language-{language}\">{code}</code></pre></div>";
             }
         );
 
@@ -493,20 +490,20 @@ public partial class AboutViewModel : ViewModelBase
             match =>
             {
                 var code = System.Web.HttpUtility.HtmlDecode(match.Groups[1].Value);
-                
+
                 var highlightedCode = code switch
                 {
-                    var x when x.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) 
-                        || x.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)
-                        || x.Contains("/") || x.Contains("\\") 
+                    var x when x.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)
+                               || x.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)
+                               || x.Contains("/") || x.Contains("\\")
                         => $"<span class=\"file-path\">{code}</span>",
-                    
+
                     var x when x.StartsWith("http://") || x.StartsWith("https://") || x.StartsWith("ws://")
                         => $"<span class=\"url\">{code}</span>",
-                    
+
                     var x when x.Contains(":") && x.Any(c => char.IsDigit(c))
                         => $"<span class=\"ip-address\">{code}</span>",
-                    
+
                     _ => HighlightInlineCode(code, isDark)
                 };
 
@@ -531,37 +528,35 @@ public partial class AboutViewModel : ViewModelBase
             "<span class=\"operator\">$1</span>"
         );
 
-        var keywords = new[] { 
-            "using", "public", "private", "protected", "internal", "class", "interface", 
-            "void", "string", "int", "bool", "var", "new", "return", "static", "async", 
+        var keywords = new[]
+        {
+            "using", "public", "private", "protected", "internal", "class", "interface",
+            "void", "string", "int", "bool", "var", "new", "return", "static", "async",
             "await", "try", "catch", "throw", "if", "else", "foreach", "in", "for", "while",
             "do", "switch", "case", "break", "continue", "default", "namespace", "this",
             "virtual", "override", "abstract", "sealed", "readonly", "const", "null", "true", "false"
         };
 
         foreach (var keyword in keywords)
-        {
             code = System.Text.RegularExpressions.Regex.Replace(
                 code,
                 $@"\b{keyword}\b(?![""'])",
                 $"<span class=\"keyword\">{keyword}</span>"
             );
-        }
 
-        var types = new[] {
+        var types = new[]
+        {
             "string", "int", "bool", "double", "float", "decimal", "object", "char", "byte",
             "sbyte", "uint", "long", "ulong", "short", "ushort", "dynamic", "var", "void",
             "Task", "List", "Dictionary", "IEnumerable", "Array", "Exception"
         };
 
         foreach (var type in types)
-        {
             code = System.Text.RegularExpressions.Regex.Replace(
                 code,
                 $@"\b{type}\b(?![""'])",
                 $"<span class=\"type\">{type}</span>"
             );
-        }
 
         code = System.Text.RegularExpressions.Regex.Replace(
             code,
@@ -606,32 +601,29 @@ public partial class AboutViewModel : ViewModelBase
 
         var keywords = new[] { "true", "false", "null" };
         foreach (var keyword in keywords)
-        {
             code = System.Text.RegularExpressions.Regex.Replace(
                 code,
                 $@"\b{keyword}\b",
                 $"<span class=\"keyword\">{keyword}</span>"
             );
-        }
 
         return code;
     }
 
     private string HighlightBatch(string code, bool isDark)
     {
-        var commands = new[] { 
-            "cd", "dir", "copy", "del", "mkdir", "rmdir", "echo", "set", "if", "else", 
+        var commands = new[]
+        {
+            "cd", "dir", "copy", "del", "mkdir", "rmdir", "echo", "set", "if", "else",
             "goto", "call", "start", "exit", "rem", "type", "for", "in", "do"
         };
 
         foreach (var command in commands)
-        {
             code = System.Text.RegularExpressions.Regex.Replace(
                 code,
                 $@"\b{command}\b",
                 $"<span class=\"keyword\">{command}</span>"
             );
-        }
 
         code = System.Text.RegularExpressions.Regex.Replace(
             code,
@@ -706,17 +698,19 @@ public partial class AboutViewModel : ViewModelBase
 
     private string ProcessNoteBlocks(string html, bool isDark)
     {
-        var bgColor = isDark 
+        var bgColor = isDark
             ? "#2d2d2d"
             : "#dfe2e5";
 
         html = System.Text.RegularExpressions.Regex.Replace(
             html,
             @"<div class=""markdown-alert markdown-alert-note"">\s*<p class=""markdown-alert-title""[^>]*>.*?Note</p>\s*<p>(.*?)</p>\s*</div>",
-            match => {
+            match =>
+            {
                 var content = match.Groups[1].Value;
                 var noteColor = "#58a6ff";
-                return $@"<div class=""note-block note"" style=""background-color: {bgColor}; border-left-color: {noteColor} !important;"">
+                return
+                    $@"<div class=""note-block note"" style=""background-color: {bgColor}; border-left-color: {noteColor} !important;"">
                            <span class=""note-block-title"" style=""color: {noteColor} !important;"">ℹ️ Note</span>
                            <div class=""note-block-content"" style=""font-weight: 600"">{content}</div></div>";
             },
@@ -726,10 +720,12 @@ public partial class AboutViewModel : ViewModelBase
         html = System.Text.RegularExpressions.Regex.Replace(
             html,
             @"<div class=""markdown-alert markdown-alert-tip"">\s*<p class=""markdown-alert-title""[^>]*>.*?Tip</p>\s*<p>(.*?)</p>\s*</div>",
-            match => {
+            match =>
+            {
                 var content = match.Groups[1].Value;
                 var tipColor = "#3fb950";
-                return $@"<div class=""note-block tip"" style=""background-color: {bgColor}; border-left-color: {tipColor} !important;"">
+                return
+                    $@"<div class=""note-block tip"" style=""background-color: {bgColor}; border-left-color: {tipColor} !important;"">
                            <span class=""note-block-title"" style=""color: {tipColor} !important;"">✅ Tip</span>
                            <div class=""note-block-content"" style=""font-weight: 600"">{content}</div></div>";
             },
@@ -739,10 +735,12 @@ public partial class AboutViewModel : ViewModelBase
         html = System.Text.RegularExpressions.Regex.Replace(
             html,
             @"<div class=""markdown-alert markdown-alert-important"">\s*<p class=""markdown-alert-title""[^>]*>.*?Important</p>\s*<p>(.*?)</p>\s*</div>",
-            match => {
+            match =>
+            {
                 var content = match.Groups[1].Value;
                 var importantColor = "#8957e5";
-                return $@"<div class=""note-block important"" style=""background-color: {bgColor}; border-left-color: {importantColor} !important;"">
+                return
+                    $@"<div class=""note-block important"" style=""background-color: {bgColor}; border-left-color: {importantColor} !important;"">
                            <span class=""note-block-title"" style=""color: {importantColor} !important;"">☑️ Important</span>
                            <div class=""note-block-content"" style=""font-weight: 600"">{content}</div></div>";
             },
@@ -752,10 +750,12 @@ public partial class AboutViewModel : ViewModelBase
         html = System.Text.RegularExpressions.Regex.Replace(
             html,
             @"<div class=""markdown-alert markdown-alert-warning"">\s*<p class=""markdown-alert-title""[^>]*>.*?Warning</p>\s*<p>(.*?)</p>\s*</div>",
-            match => {
+            match =>
+            {
                 var content = match.Groups[1].Value;
                 var warningColor = "#d29922";
-                return $@"<div class=""note-block warning"" style=""background-color: {bgColor}; border-left-color: {warningColor} !important;"">
+                return
+                    $@"<div class=""note-block warning"" style=""background-color: {bgColor}; border-left-color: {warningColor} !important;"">
                            <span class=""note-block-title"" style=""color: {warningColor} !important;"">⚠️ Warning</span>
                            <div class=""note-block-content"" style=""font-weight: 600"">{content}</div></div>";
             },
@@ -765,10 +765,12 @@ public partial class AboutViewModel : ViewModelBase
         html = System.Text.RegularExpressions.Regex.Replace(
             html,
             @"<div class=""markdown-alert markdown-alert-caution"">\s*<p class=""markdown-alert-title""[^>]*>.*?Caution</p>\s*<p>(.*?)</p>\s*</div>",
-            match => {
+            match =>
+            {
                 var content = match.Groups[1].Value;
                 var cautionColor = "#f85149";
-                return $@"<div class=""note-block caution"" style=""background-color: {bgColor}; border-left-color: {cautionColor} !important;"">
+                return
+                    $@"<div class=""note-block caution"" style=""background-color: {bgColor}; border-left-color: {cautionColor} !important;"">
                            <span class=""note-block-title"" style=""color: {cautionColor} !important;"">⛔ Caution</span>
                            <div class=""note-block-content"" style=""font-weight: 600"">{content}</div></div>";
             },
@@ -780,10 +782,7 @@ public partial class AboutViewModel : ViewModelBase
 
     public override void Dispose()
     {
-        if (_mainWindow != null)
-        {
-            _mainWindow.ActualThemeVariantChanged -= OnThemeChanged;
-        }
+        if (_mainWindow != null) _mainWindow.ActualThemeVariantChanged -= OnThemeChanged;
         base.Dispose();
     }
 }

@@ -13,37 +13,35 @@ public static class TermsService
         {
             var assembly = Assembly.GetExecutingAssembly();
             var currentLanguage = LocalizationService.Instance.CurrentLanguage;
-            var resourcePath = isLauncherTerms ? 
-                $"FikaLauncher.Assets.Terms.Launcher.{currentLanguage}.md" : 
-                $"FikaLauncher.Assets.Terms.Fika.{currentLanguage}.md";
-            
+            var resourcePath = isLauncherTerms
+                ? $"FikaLauncher.Assets.Terms.Launcher.{currentLanguage}.md"
+                : $"FikaLauncher.Assets.Terms.Fika.{currentLanguage}.md";
+
             Console.WriteLine($"[Terms] Current language: {currentLanguage}");
             Console.WriteLine($"[Terms] Attempting to load terms from: {resourcePath}");
 
-            Stream? stream = assembly.GetManifestResourceStream(resourcePath);
-            
+            var stream = assembly.GetManifestResourceStream(resourcePath);
+
             if (stream == null)
             {
                 Console.WriteLine($"[Terms] No localized version found for {currentLanguage}");
-                
-                resourcePath = isLauncherTerms ? 
-                    "FikaLauncher.Assets.Terms.Launcher.en-US.md" : 
-                    "FikaLauncher.Assets.Terms.Fika.en-US.md";
-                
+
+                resourcePath = isLauncherTerms
+                    ? "FikaLauncher.Assets.Terms.Launcher.en-US.md"
+                    : "FikaLauncher.Assets.Terms.Fika.en-US.md";
+
                 Console.WriteLine($"[Terms] Falling back to English terms: {resourcePath}");
                 stream = assembly.GetManifestResourceStream(resourcePath);
-                
+
                 if (stream == null)
                 {
                     Console.WriteLine($"[Terms] Failed to load English terms file: {resourcePath}");
                     Console.WriteLine("[Terms] Available resources:");
                     var resources = assembly.GetManifestResourceNames();
-                    foreach (var resource in resources)
-                    {
-                        Console.WriteLine($"[Terms] - {resource}");
-                    }
+                    foreach (var resource in resources) Console.WriteLine($"[Terms] - {resource}");
                     return "Error loading terms of use.";
                 }
+
                 Console.WriteLine("[Terms] Successfully loaded English fallback terms");
             }
             else
@@ -61,9 +59,9 @@ public static class TermsService
                     ? ("#242424", "#d4d4d4", "#ffffff", "#569cd6")
                     : ("#ebeef0", "#24292f", "#000000", "#0366d6");
 
-                var noteBlockBgColor = isDark 
-                    ? "#2d2d2d" 
-                    : "#dfe2e5"; 
+                var noteBlockBgColor = isDark
+                    ? "#2d2d2d"
+                    : "#dfe2e5";
 
                 var pipeline = new MarkdownPipelineBuilder()
                     .UseAdvancedExtensions()
@@ -186,10 +184,12 @@ public static class TermsService
         html = System.Text.RegularExpressions.Regex.Replace(
             html,
             @"<div class=""markdown-alert markdown-alert-note"">\s*<p class=""markdown-alert-title""[^>]*>.*?Note</p>\s*<p>(.*?)</p>\s*</div>",
-            match => {
+            match =>
+            {
                 var content = match.Groups[1].Value;
                 var noteColor = "#58a6ff";
-                return $@"<div class=""note-block note"" style=""background-color: {bgColor}; border-left-color: {noteColor} !important;"">
+                return
+                    $@"<div class=""note-block note"" style=""background-color: {bgColor}; border-left-color: {noteColor} !important;"">
                            <span class=""note-block-title"" style=""color: {noteColor} !important;"">ℹ️ Note</span>
                            <div class=""note-block-content"" style=""font-weight: 600"">{content}</div></div>";
             },
@@ -199,10 +199,12 @@ public static class TermsService
         html = System.Text.RegularExpressions.Regex.Replace(
             html,
             @"<div class=""markdown-alert markdown-alert-tip"">\s*<p class=""markdown-alert-title""[^>]*>.*?Tip</p>\s*<p>(.*?)</p>\s*</div>",
-            match => {
+            match =>
+            {
                 var content = match.Groups[1].Value;
                 var tipColor = "#3fb950";
-                return $@"<div class=""note-block tip"" style=""background-color: {bgColor}; border-left-color: {tipColor} !important;"">
+                return
+                    $@"<div class=""note-block tip"" style=""background-color: {bgColor}; border-left-color: {tipColor} !important;"">
                            <span class=""note-block-title"" style=""color: {tipColor} !important;"">✅ Tip</span>
                            <div class=""note-block-content"" style=""font-weight: 600"">{content}</div></div>";
             },
@@ -212,10 +214,12 @@ public static class TermsService
         html = System.Text.RegularExpressions.Regex.Replace(
             html,
             @"<div class=""markdown-alert markdown-alert-important"">\s*<p class=""markdown-alert-title""[^>]*>.*?Important</p>\s*<p>(.*?)</p>\s*</div>",
-            match => {
+            match =>
+            {
                 var content = match.Groups[1].Value;
                 var importantColor = "#8957e5";
-                return $@"<div class=""note-block important"" style=""background-color: {bgColor}; border-left-color: {importantColor} !important;"">
+                return
+                    $@"<div class=""note-block important"" style=""background-color: {bgColor}; border-left-color: {importantColor} !important;"">
                            <span class=""note-block-title"" style=""color: {importantColor} !important;"">☑️ Important</span>
                            <div class=""note-block-content"" style=""font-weight: 600"">{content}</div></div>";
             },
@@ -225,10 +229,12 @@ public static class TermsService
         html = System.Text.RegularExpressions.Regex.Replace(
             html,
             @"<div class=""markdown-alert markdown-alert-warning"">\s*<p class=""markdown-alert-title""[^>]*>.*?Warning</p>\s*<p>(.*?)</p>\s*</div>",
-            match => {
+            match =>
+            {
                 var content = match.Groups[1].Value;
                 var warningColor = "#d29922";
-                return $@"<div class=""note-block warning"" style=""background-color: {bgColor}; border-left-color: {warningColor} !important;"">
+                return
+                    $@"<div class=""note-block warning"" style=""background-color: {bgColor}; border-left-color: {warningColor} !important;"">
                            <span class=""note-block-title"" style=""color: {warningColor} !important;"">⚠️ Warning</span>
                            <div class=""note-block-content"" style=""font-weight: 600"">{content}</div></div>";
             },
@@ -238,10 +244,12 @@ public static class TermsService
         html = System.Text.RegularExpressions.Regex.Replace(
             html,
             @"<div class=""markdown-alert markdown-alert-caution"">\s*<p class=""markdown-alert-title""[^>]*>.*?Caution</p>\s*<p>(.*?)</p>\s*</div>",
-            match => {
+            match =>
+            {
                 var content = match.Groups[1].Value;
                 var cautionColor = "#f85149";
-                return $@"<div class=""note-block caution"" style=""background-color: {bgColor}; border-left-color: {cautionColor} !important;"">
+                return
+                    $@"<div class=""note-block caution"" style=""background-color: {bgColor}; border-left-color: {cautionColor} !important;"">
                            <span class=""note-block-title"" style=""color: {cautionColor} !important;"">⛔ Caution</span>
                            <div class=""note-block-content"" style=""font-weight: 600"">{content}</div></div>";
             },

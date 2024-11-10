@@ -4,13 +4,11 @@
   "AcceptTerms": "I have read and accept the terms of use",
   "Next": "Next",
   "GetStarted": "Get Started",
-
   "Play": "Play",
   "Install": "Install",
   "Mods": "Mods",
   "Settings": "Settings",
   "About": "About",
-
   "Language": "Launcher Language:",
   "Theme": "Launcher Theme:",
   "Light": "Light",
@@ -34,7 +32,6 @@
   "SptInstall": "SP-Tarkov install:",
   "SetSpt": "Set existing SP-Tarkov folder path",
   "DownloadEftSettings": "Download game settings from EFT Live",
-  
   "Error": "Error!",
   "Success": "Success!",
   "Warning": "Warning!",
@@ -66,22 +63,17 @@
   "BookmarkName": "Change the nickname",
   "BookmarkRemoved": "Server removed from bookmarks!",
   "BookmarkRenamed": "Bookmark name updated!",
-
   "UsernameRequirements": "Username must be:\n• 3-20 characters long\n• Can only contain letters, numbers, dots, and underscores",
   "PasswordRequirements": "Password must be:\n• 8-64 characters long\n• Include at least one uppercase letter\n• Include at least one lowercase letter\n• Include at least one number\n• Include at least one special character",
   "ShowHidePass": "Show or hide the password field",
-
   "Save": "Save",
   "Cancel": "Cancel",
   "Proceed": "Proceed",
-
   "AddBookmarkTitle": "Add Bookmark",
   "ServerAddress": "Server Address",
   "ServerPort": "Port",
-  
   "TempWarn": "This action will remove all files within the selected directory, there is no way to recover what has been deleted.",
   "SureProceed": "Are you sure you want to proceed?",
-  
   "CreateAccount": "Create account",
   "Login": "Log in",
   "LogOut": "Log out",
@@ -93,7 +85,6 @@
   "Shutdown": "Shutdown",
   "Connect": "Connect",
   "Disconnect": "Disconnect",
-  
   "WelcomeBack": "Welcome back, {0}",
   "GoodMorning": "Good morning, {0}",
   "GoodAfternoon": "Good afternoon, {0}",
@@ -116,9 +107,6 @@
   "RandomGreeting16": "I added an extra mine on Streets just for you, {0}",
   "RandomGreeting17": "{0}, don't forget pain killers again",
   "RandomGreeting18": "{0}, cousin! Let's go bowling!",
-
-
   "AboutError": "Failed to load documentation from Github"
-  
 }
 

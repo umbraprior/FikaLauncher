@@ -2,8 +2,6 @@
     x:Class="FikaLauncher.Views.SettingsView"
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:l="using:Jeek.Avalonia.Localization"
     xmlns:vm="clr-namespace:FikaLauncher.ViewModels"
     xmlns:material="using:Material.Icons.Avalonia"
@@ -12,118 +10,120 @@
         <vm:SettingsViewModel />
     </Design.DataContext>
     <ScrollViewer Theme="{DynamicResource StaticScrollViewer}">
-        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="25" Spacing="75" >
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="25" Spacing="75">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="100">
                 <StackPanel Spacing="20">
-                    <TextBlock Text="{l:Localize Language}" FontWeight="Bold" FontSize="15"/>
+                    <TextBlock Text="{l:Localize Language}" FontWeight="Bold" FontSize="15" />
                     <ComboBox SelectedIndex="0" Width="150"
                               ItemsSource="{x:Static l:Localizer.Languages}"
-                              SelectedItem="{Binding Language}"/>
+                              SelectedItem="{Binding Language}" />
                 </StackPanel>
                 <StackPanel Spacing="20">
-                    <TextBlock Text="{l:Localize Theme}" FontWeight="Bold" FontSize="15"/>
+                    <TextBlock Text="{l:Localize Theme}" FontWeight="Bold" FontSize="15" />
                     <StackPanel Spacing="10">
                         <RadioButton Theme="{DynamicResource CardRadioButton}"
-                                     Width="150" Content="{l:Localize Dark}" 
-                                     IsChecked="{Binding IsTheme}"/>
+                                     Width="150" Content="{l:Localize Dark}"
+                                     IsChecked="{Binding IsTheme}" />
                         <RadioButton Theme="{DynamicResource CardRadioButton}"
-                                     Width="150" Content="{l:Localize Light}" 
-                                     IsChecked="{Binding !IsTheme}"/>
+                                     Width="150" Content="{l:Localize Light}"
+                                     IsChecked="{Binding !IsTheme}" />
                     </StackPanel>
                 </StackPanel>
             </StackPanel>
             <StackPanel Spacing="20">
-                <TextBlock Text="{l:Localize CloseWindow}" FontWeight="Bold" FontSize="15"/>
+                <TextBlock Text="{l:Localize CloseWindow}" FontWeight="Bold" FontSize="15" />
                 <ComboBox ItemsSource="{Binding CloseWindowOptions}"
                           SelectedIndex="{Binding SelectedCloseWindowOption}"
                           HorizontalAlignment="Left"
-                          Width="400"/>
+                          Width="400" />
             </StackPanel>
             <StackPanel Spacing="20">
-                <TextBlock Text="{l:Localize LaunchGame}" FontWeight="Bold" FontSize="15"/>
+                <TextBlock Text="{l:Localize LaunchGame}" FontWeight="Bold" FontSize="15" />
                 <ComboBox ItemsSource="{Binding LaunchGameOptions}"
                           SelectedIndex="{Binding SelectedLaunchGameOption}"
                           HorizontalAlignment="Left"
-                          Width="400"/>
+                          Width="400" />
             </StackPanel>
             <StackPanel Spacing="20">
-                <TextBlock Text="{l:Localize Security}" FontWeight="Bold" FontSize="15"/>
+                <TextBlock Text="{l:Localize Security}" FontWeight="Bold" FontSize="15" />
                 <StackPanel HorizontalAlignment="Center" Spacing="10">
-                    <CheckBox Content="{l:Localize RememberUsername}" Theme="{DynamicResource CardCheckBox}" IsChecked="{Binding RememberLogin}"/>
-                    <CheckBox Content="{l:Localize KeepLoggedIn}" Margin="35, 0, 0, 0" Theme="{DynamicResource CardCheckBox}" 
+                    <CheckBox Content="{l:Localize RememberUsername}" Theme="{DynamicResource CardCheckBox}"
+                              IsChecked="{Binding RememberLogin}" />
+                    <CheckBox Content="{l:Localize KeepLoggedIn}" Margin="35, 0, 0, 0"
+                              Theme="{DynamicResource CardCheckBox}"
                               IsChecked="{Binding KeepMeLoggedIn}"
-                              IsEnabled="{Binding RememberLogin}"/>
+                              IsEnabled="{Binding RememberLogin}" />
                 </StackPanel>
             </StackPanel>
             <StackPanel Spacing="20">
-                <TextBlock Text="{l:Localize EftInstall}" FontWeight="Bold" FontSize="15"/>
-                <Button Classes="Primary" Theme="{DynamicResource OutlineButton}" 
+                <TextBlock Text="{l:Localize EftInstall}" FontWeight="Bold" FontSize="15" />
+                <Button Classes="Primary" Theme="{DynamicResource OutlineButton}"
                         Command="{Binding OpenEftLiveFolderCommand}"
                         IsVisible="{Binding HasEftPath}">
                     <ToolTip.Tip>
-                        <TextBlock Text="{l:Localize OpenDirectory}"/>
+                        <TextBlock Text="{l:Localize OpenDirectory}" />
                     </ToolTip.Tip>
-                    <TextBlock Text="{Binding EftLiveInstallPath}" TextWrapping="Wrap"/>
+                    <TextBlock Text="{Binding EftLiveInstallPath}" TextWrapping="Wrap" />
                 </Button>
                 <StackPanel Orientation="Horizontal" Spacing="5" HorizontalAlignment="Center">
-                    <material:MaterialIcon Kind="Folder" HorizontalAlignment="Center"/>
+                    <material:MaterialIcon Kind="Folder" HorizontalAlignment="Center" />
                     <Button Classes="Success" Theme="{DynamicResource BorderlessButton}"
-                            Command="{Binding SetEftLiveFolderCommand}" Content="{l:Localize SetEft}"/>
+                            Command="{Binding SetEftLiveFolderCommand}" Content="{l:Localize SetEft}" />
                 </StackPanel>
             </StackPanel>
             <StackPanel Spacing="40">
-                <TextBlock Text="{l:Localize LauncherData}" FontWeight="Bold" FontSize="15"/>
+                <TextBlock Text="{l:Localize LauncherData}" FontWeight="Bold" FontSize="15" />
                 <StackPanel Spacing="10">
-                    <Button Classes="Primary" Theme="{DynamicResource OutlineButton}" 
+                    <Button Classes="Primary" Theme="{DynamicResource OutlineButton}"
                             Command="{Binding OpenTempFolderCommand}"
                             IsVisible="{Binding HasTempPath}">
                         <ToolTip.Tip>
-                            <TextBlock Text="{l:Localize OpenDirectory}"/>
+                            <TextBlock Text="{l:Localize OpenDirectory}" />
                         </ToolTip.Tip>
-                        <TextBlock Text="{Binding TempDirectoryPath}" TextWrapping="Wrap"/>
+                        <TextBlock Text="{Binding TempDirectoryPath}" TextWrapping="Wrap" />
                     </Button>
                     <StackPanel Orientation="Horizontal" Spacing="5" HorizontalAlignment="Center">
-                        <material:MaterialIcon Kind="CloseThick" HorizontalAlignment="Center"/>
+                        <material:MaterialIcon Kind="CloseThick" HorizontalAlignment="Center" />
                         <Button Classes="Danger" Theme="{DynamicResource BorderlessButton}"
-                                Command="{Binding CleanTempFolderCommand}" Content="{l:Localize CleanTemp}"/>
+                                Command="{Binding CleanTempFolderCommand}" Content="{l:Localize CleanTemp}" />
                     </StackPanel>
                 </StackPanel>
                 <StackPanel Spacing="10">
-                    <Button Classes="Primary" Theme="{DynamicResource OutlineButton}" 
+                    <Button Classes="Primary" Theme="{DynamicResource OutlineButton}"
                             Command="{Binding OpenCacheFolderCommand}"
                             IsVisible="{Binding HasCachePath}">
                         <ToolTip.Tip>
-                            <TextBlock Text="{l:Localize OpenDirectory}"/>
+                            <TextBlock Text="{l:Localize OpenDirectory}" />
                         </ToolTip.Tip>
-                        <TextBlock Text="{Binding CacheDirectoryPath}" TextWrapping="Wrap"/>
+                        <TextBlock Text="{Binding CacheDirectoryPath}" TextWrapping="Wrap" />
                     </Button>
                     <StackPanel Orientation="Horizontal" Spacing="5" HorizontalAlignment="Center">
-                        <material:MaterialIcon Kind="CloseThick" HorizontalAlignment="Center"/>
+                        <material:MaterialIcon Kind="CloseThick" HorizontalAlignment="Center" />
                         <Button Classes="Danger" Theme="{DynamicResource BorderlessButton}"
-                                Command="{Binding CleanCacheFolderCommand}" Content="{l:Localize CleanCache}"/>
+                                Command="{Binding CleanCacheFolderCommand}" Content="{l:Localize CleanCache}" />
                     </StackPanel>
                 </StackPanel>
             </StackPanel>
             <StackPanel Spacing="20">
-                <TextBlock Text="{l:Localize SptInstall}" FontWeight="Bold" FontSize="15"/>
-                <Button Classes="Primary" Theme="{DynamicResource OutlineButton}" 
+                <TextBlock Text="{l:Localize SptInstall}" FontWeight="Bold" FontSize="15" />
+                <Button Classes="Primary" Theme="{DynamicResource OutlineButton}"
                         Command="{Binding OpenSpTarkovFolderCommand}"
                         IsVisible="{Binding HasSptPath}">
                     <ToolTip.Tip>
-                        <TextBlock Text="{l:Localize OpenDirectory}"/>
+                        <TextBlock Text="{l:Localize OpenDirectory}" />
                     </ToolTip.Tip>
-                    <TextBlock Text="{Binding SpTarkovInstallPath}" TextWrapping="Wrap"/>
+                    <TextBlock Text="{Binding SpTarkovInstallPath}" TextWrapping="Wrap" />
                 </Button>
                 <StackPanel Orientation="Horizontal" Spacing="5" HorizontalAlignment="Center">
-                    <material:MaterialIcon Kind="Folder" HorizontalAlignment="Center"/>
+                    <material:MaterialIcon Kind="Folder" HorizontalAlignment="Center" />
                     <Button Classes="Success" Theme="{DynamicResource BorderlessButton}"
-                            Command="{Binding SetSpTarkovFolderCommand}" Content="{l:Localize SetSpt}"/>
+                            Command="{Binding SetSpTarkovFolderCommand}" Content="{l:Localize SetSpt}" />
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" Spacing="5" HorizontalAlignment="Center"
                             IsVisible="{Binding HasSptPath}">
-                    <material:MaterialIcon Kind="Download" HorizontalAlignment="Center"/>
+                    <material:MaterialIcon Kind="Download" HorizontalAlignment="Center" />
                     <Button Classes="Warning" Theme="{DynamicResource BorderlessButton}"
-                            Content="{l:Localize DownloadEftSettings}"/>
+                            Content="{l:Localize DownloadEftSettings}" />
                 </StackPanel>
             </StackPanel>
         </StackPanel>

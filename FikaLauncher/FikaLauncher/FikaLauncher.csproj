@@ -7,7 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <AvaloniaResource Include="Assets\**" />
+        <AvaloniaResource Include="Assets\**"/>
     </ItemGroup>
 
     <ItemGroup>
@@ -17,29 +17,29 @@
     </ItemGroup>
 
     <ItemGroup>
-        <EmbeddedResource Include="Assets\Terms\**\*.md" />
+        <EmbeddedResource Include="Assets\Terms\**\*.md"/>
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Avalonia" Version="11.2.0" />
-        <PackageReference Include="Avalonia.Fonts.Inter" Version="11.2.0" />
+        <PackageReference Include="Avalonia" Version="11.2.0"/>
+        <PackageReference Include="Avalonia.Fonts.Inter" Version="11.2.0"/>
         <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
-        <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.2.0" />
-        <PackageReference Include="Avalonia.HtmlRenderer" Version="11.0.0" />
-        <PackageReference Include="Avalonia.ReactiveUI" Version="11.2.0" />
-        <PackageReference Include="Avalonia.Xaml.Behaviors" Version="11.2.0" />
-        <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0-preview1" />
-        <PackageReference Include="DialogHost.Avalonia" Version="0.9.0-preview1" />
-        <PackageReference Include="Jeek.Avalonia.Localization" Version="1.1.1" />
-        <PackageReference Include="Markdown.ColorCode" Version="2.3.0" />
-        <PackageReference Include="Material.Icons.Avalonia" Version="2.1.10" />
-        <PackageReference Include="Semi.Avalonia" Version="11.2.0" />
-        <PackageReference Include="Markdig" Version="0.38.0" />
-        <PackageReference Include="System.Net.Http" Version="4.3.4" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.0-rc.2.24474.1" />
+        <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.2.0"/>
+        <PackageReference Include="Avalonia.HtmlRenderer" Version="11.0.0"/>
+        <PackageReference Include="Avalonia.ReactiveUI" Version="11.2.0"/>
+        <PackageReference Include="Avalonia.Xaml.Behaviors" Version="11.2.0"/>
+        <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0-preview1"/>
+        <PackageReference Include="DialogHost.Avalonia" Version="0.9.0-preview1"/>
+        <PackageReference Include="Jeek.Avalonia.Localization" Version="1.1.1"/>
+        <PackageReference Include="Markdown.ColorCode" Version="2.3.0"/>
+        <PackageReference Include="Material.Icons.Avalonia" Version="2.1.10"/>
+        <PackageReference Include="Semi.Avalonia" Version="11.2.0"/>
+        <PackageReference Include="Markdig" Version="0.38.0"/>
+        <PackageReference Include="System.Net.Http" Version="4.3.4"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.0-rc.2.24474.1"/>
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.0-rc.2.24474.1">
-          <PrivateAssets>all</PrivateAssets>
-          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
     </ItemGroup>
 

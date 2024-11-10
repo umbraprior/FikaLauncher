@@ -21,43 +21,31 @@ using System.ComponentModel;
 
 namespace FikaLauncher.ViewModels;
 
-
 public partial class SettingsViewModel : ViewModelBase
 {
-    [ObservableProperty]
-    private IImage? _logoImage;
-    
-    [ObservableProperty]
-    private bool _isTheme;
-    
+    [ObservableProperty] private IImage? _logoImage;
+
+    [ObservableProperty] private bool _isTheme;
+
     private WindowNotificationManager? _manager;
-    
-    [ObservableProperty]
-    private string _language = LocalizationService.Instance.CurrentLanguage;
 
-    [ObservableProperty]
-    private bool _rememberLogin;
+    [ObservableProperty] private string _language = LocalizationService.Instance.CurrentLanguage;
 
-    [ObservableProperty]
-    private bool _keepMeLoggedIn;
+    [ObservableProperty] private bool _rememberLogin;
 
-    [ObservableProperty]
-    private string _eftLiveInstallPath;
+    [ObservableProperty] private bool _keepMeLoggedIn;
 
-    [ObservableProperty]
-    private string _tempDirectoryPath;
+    [ObservableProperty] private string _eftLiveInstallPath;
 
-    [ObservableProperty]
-    private string _spTarkovInstallPath;
+    [ObservableProperty] private string _tempDirectoryPath;
 
-    [ObservableProperty]
-    private int _closeWindowBehavior;
+    [ObservableProperty] private string _spTarkovInstallPath;
 
-    [ObservableProperty]
-    private int _launchGameBehavior;
+    [ObservableProperty] private int _closeWindowBehavior;
 
-    [ObservableProperty]
-    private string _cacheDirectoryPath;
+    [ObservableProperty] private int _launchGameBehavior;
+
+    [ObservableProperty] private string _cacheDirectoryPath;
 
     public bool HasEftPath => !string.IsNullOrEmpty(EftLiveInstallPath);
     public bool HasTempPath => !string.IsNullOrEmpty(TempDirectoryPath);
@@ -69,13 +57,16 @@ public partial class SettingsViewModel : ViewModelBase
     public string SptPathDisplay => HasSptPath ? SpTarkovInstallPath : Localizer.Get("NoFolderSelected");
     public string CachePathDisplay => HasCachePath ? CacheDirectoryPath : Localizer.Get("NoFolderSelected");
 
-    private string GetLocalizedOption(string key) => Localizer.Get(key);
+    private string GetLocalizedOption(string key)
+    {
+        return Localizer.Get(key);
+    }
 
     private string[] _closeWindowOptions = Array.Empty<string>();
     private string[] _launchGameOptions = Array.Empty<string>();
 
-    public string[] CloseWindowOptions 
-    { 
+    public string[] CloseWindowOptions
+    {
         get => _closeWindowOptions;
         private set
         {
@@ -85,8 +76,8 @@ public partial class SettingsViewModel : ViewModelBase
         }
     }
 
-    public string[] LaunchGameOptions 
-    { 
+    public string[] LaunchGameOptions
+    {
         get => _launchGameOptions;
         private set
         {
@@ -126,11 +117,9 @@ public partial class SettingsViewModel : ViewModelBase
         }
     }
 
-    [ObservableProperty]
-    private int _selectedCloseWindowOption;
+    [ObservableProperty] private int _selectedCloseWindowOption;
 
-    [ObservableProperty]
-    private int _selectedLaunchGameOption;
+    [ObservableProperty] private int _selectedLaunchGameOption;
 
     partial void OnSelectedCloseWindowOptionChanged(int value)
     {
@@ -173,10 +162,7 @@ public partial class SettingsViewModel : ViewModelBase
     {
         LocalizationService.Instance.PropertyChanged += OnLanguageServiceChanged;
         UpdateLocalizedOptions();
-        if (Application.Current != null)
-        {
-            Application.Current.ActualThemeVariantChanged += OnThemeChanged;
-        }
+        if (Application.Current != null) Application.Current.ActualThemeVariantChanged += OnThemeChanged;
 
         _isTheme = ConfigurationService.Settings.IsDarkTheme;
         UpdateLogo(Application.Current?.ActualThemeVariant == ThemeVariant.Dark);
@@ -195,19 +181,13 @@ public partial class SettingsViewModel : ViewModelBase
 
     private void OnThemeChanged(object? sender, EventArgs e)
     {
-        if (Application.Current != null)
-        {
-            UpdateLogo(Application.Current.ActualThemeVariant == ThemeVariant.Dark);
-        }
+        if (Application.Current != null) UpdateLogo(Application.Current.ActualThemeVariant == ThemeVariant.Dark);
     }
 
     public override void Dispose()
     {
         LocalizationService.Instance.PropertyChanged -= OnLanguageServiceChanged;
-        if (Application.Current != null)
-        {
-            Application.Current.ActualThemeVariantChanged -= OnThemeChanged;
-        }
+        if (Application.Current != null) Application.Current.ActualThemeVariantChanged -= OnThemeChanged;
         base.Dispose();
     }
 
@@ -215,15 +195,11 @@ public partial class SettingsViewModel : ViewModelBase
     {
         ConfigurationService.Settings.IsDarkTheme = value;
         App.ChangeTheme(value);
-        
+
         if (App.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-        {
             if (desktop.MainWindow?.DataContext is MainViewModel mainViewModel)
-            {
                 mainViewModel.UpdateLogo(value);
-            }
-        }
-        
+
         Task.Run(async () =>
         {
             try
@@ -235,11 +211,8 @@ public partial class SettingsViewModel : ViewModelBase
                 Console.WriteLine($"Error saving settings: {ex.Message}");
             }
         });
-        
-        ShowNotification(
-            Localizer.Get("ThemeChange"),
-            $"{(value ? Localizer.Get("Dark") : Localizer.Get("Light"))} {Localizer.Get("ThemeApplied")}",
-            NotificationType.Success);
+
+        NotificationController.ShowThemeChanged(value);
     }
 
     partial void OnRememberLoginChanged(bool value)
@@ -250,27 +223,25 @@ public partial class SettingsViewModel : ViewModelBase
             KeepMeLoggedIn = false;
             ConfigurationService.Settings.KeepLauncherOpen = false;
         }
+
         Task.Run(ConfigurationService.SaveSettingsAsync);
     }
 
     partial void OnKeepMeLoggedInChanged(bool value)
     {
-        if (value && !RememberLogin)
-        {
-            RememberLogin = true;
-        }
-        
+        if (value && !RememberLogin) RememberLogin = true;
+
         ConfigurationService.Settings.KeepLauncherOpen = value;
-        
+
         if (AuthService.IsLoggedIn)
         {
             var currentState = ApplicationStateService.GetCurrentState();
             ApplicationStateService.SaveLoginState(
-                AuthService.CurrentUsername, 
-                true, 
+                AuthService.CurrentUsername,
+                true,
                 currentState.SecurityToken);
         }
-        
+
         Task.Run(ConfigurationService.SaveSettingsAsync);
     }
 
@@ -304,32 +275,22 @@ public partial class SettingsViewModel : ViewModelBase
     private void ShowNotification(string title, string message, NotificationType type)
     {
         if (App.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-        {
             if (desktop.MainWindow?.DataContext is MainViewModel mainViewModel)
-            {
                 mainViewModel.ShowNotification(title, message, type);
-            }
-        }
     }
 
     [RelayCommand]
     private async Task SetEftLiveFolder()
     {
         var folderPath = await SelectFolder();
-        if (!string.IsNullOrEmpty(folderPath))
-        {
-            EftLiveInstallPath = folderPath;
-        }
+        if (!string.IsNullOrEmpty(folderPath)) EftLiveInstallPath = folderPath;
     }
 
     [RelayCommand]
     private async Task SetSpTarkovFolder()
     {
         var folderPath = await SelectFolder();
-        if (!string.IsNullOrEmpty(folderPath))
-        {
-            SpTarkovInstallPath = folderPath;
-        }
+        if (!string.IsNullOrEmpty(folderPath)) SpTarkovInstallPath = folderPath;
     }
 
     private async Task<string?> SelectFolder()
@@ -347,6 +308,7 @@ public partial class SettingsViewModel : ViewModelBase
 
             return folders.Count > 0 ? folders[0].Path.LocalPath : null;
         }
+
         return null;
     }
 
@@ -365,78 +327,59 @@ public partial class SettingsViewModel : ViewModelBase
     private void OpenFolder(string path)
     {
         if (Directory.Exists(path))
-        {
             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo()
             {
                 FileName = path,
                 UseShellExecute = true,
                 Verb = "open"
             });
-        }
         else
-        {
-            ShowNotification(
-                Localizer.Get("Error"),
-                $"{Localizer.Get("DirectoryNotExist")}: {path}",
-                NotificationType.Error);
-        }
+            NotificationController.ShowDirectoryNotExist(path);
     }
 
     [RelayCommand]
     private async Task CleanTempFolder()
     {
-        var dialogResult = await DialogService.ShowDialog<CleanTempFilesDialogView>(new CleanTempFilesDialogViewModel());
+        var dialogResult =
+            await DialogService.ShowDialog<CleanTempFilesDialogView>(new CleanTempFilesDialogViewModel());
 
         if (dialogResult is bool result && result)
-        {
             try
             {
                 FileSystemService.CleanTempDirectory();
-                ShowNotification(
-                    Localizer.Get("Success"),
-                    Localizer.Get("TempClean"),
-                    NotificationType.Success);
+                NotificationController.ShowTempCleanSuccess();
             }
             catch (Exception)
             {
-                ShowNotification(
-                    Localizer.Get("Error"),
-                    Localizer.Get("TempCleanError"),
-                    NotificationType.Error);
+                NotificationController.ShowTempCleanError();
             }
-        }
     }
 
     [RelayCommand]
     private async Task CleanCacheFolder()
     {
-        var dialogResult = await DialogService.ShowDialog<CleanTempFilesDialogView>(new CleanTempFilesDialogViewModel());
+        var dialogResult =
+            await DialogService.ShowDialog<CleanTempFilesDialogView>(new CleanTempFilesDialogViewModel());
 
         if (dialogResult is bool result && result)
-        {
             try
             {
                 FileSystemService.CleanCacheDirectory();
-                ShowNotification(
-                    Localizer.Get("Success"),
-                    Localizer.Get("CacheClean"),
-                    NotificationType.Success);
+                NotificationController.ShowCacheCleanSuccess();
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error cleaning cache directory: {ex.Message}");
-                ShowNotification(
-                    Localizer.Get("Error"),
-                    Localizer.Get("CacheCleanError"),
-                    NotificationType.Error);
+                NotificationController.ShowCacheCleanError();
             }
-        }
     }
-    
+
     public void UpdateLogo(bool isDarkTheme)
     {
-        var uri = new Uri(isDarkTheme ? "avares://FikaLauncher/Assets/fika-logo-light.png" : "avares://FikaLauncher/Assets/fika-logo-dark.png");
-            
+        var uri = new Uri(isDarkTheme
+            ? "avares://FikaLauncher/Assets/fika-logo-light.png"
+            : "avares://FikaLauncher/Assets/fika-logo-dark.png");
+
         try
         {
             using var stream = AssetLoader.Open(uri);

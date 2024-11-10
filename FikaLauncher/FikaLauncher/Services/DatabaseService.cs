@@ -14,7 +14,7 @@ public static class DatabaseService
 {
     private static readonly string EncryptionKey = "PR0J3CTF1K4RUL3S1337!";
     private static readonly string TokenKey = "T0K3NK3Y!2024FIKA";
-    
+
     public static void Initialize()
     {
         try
@@ -22,9 +22,9 @@ public static class DatabaseService
             using var context = new AppDbContext();
 
             context.Database.EnsureCreated();
-            
+
             CreateDatabaseViews(context);
-            
+
             Console.WriteLine("Database initialized successfully");
         }
         catch (Exception ex)
@@ -33,13 +33,13 @@ public static class DatabaseService
             throw;
         }
     }
-    
+
     private static void CreateDatabaseViews(AppDbContext context)
     {
         var dropViewsSql = @"
             DROP VIEW IF EXISTS UsersView;
             DROP VIEW IF EXISTS ServerBookmarksView;";
-        
+
         context.Database.ExecuteSqlRaw(dropViewsSql);
 
         var usersViewSql = @"
@@ -52,7 +52,7 @@ public static class DatabaseService
                 IsActive
             FROM Users
             ORDER BY CreatedAt DESC;";
-        
+
         var bookmarksViewSql = @"
             CREATE VIEW ServerBookmarksView AS
             SELECT 
@@ -67,54 +67,54 @@ public static class DatabaseService
             JOIN Users u ON u.Id = sb.UserId
             GROUP BY sb.UserId, u.Username
             ORDER BY u.Username;";
-        
+
         context.Database.ExecuteSqlRaw(usersViewSql);
         context.Database.ExecuteSqlRaw(bookmarksViewSql);
     }
-    
+
     public static string EncryptPassword(string password)
     {
         using var aes = Aes.Create();
         aes.Key = Encoding.UTF8.GetBytes(EncryptionKey.PadRight(32));
         aes.IV = new byte[16];
-        
+
         using var encryptor = aes.CreateEncryptor();
         var plainBytes = Encoding.UTF8.GetBytes(password);
         var encryptedBytes = encryptor.TransformFinalBlock(plainBytes, 0, plainBytes.Length);
         return Convert.ToBase64String(encryptedBytes);
     }
-    
+
     public static string DecryptPassword(string encryptedPassword)
     {
         using var aes = Aes.Create();
         aes.Key = Encoding.UTF8.GetBytes(EncryptionKey.PadRight(32));
         aes.IV = new byte[16];
-        
+
         using var decryptor = aes.CreateDecryptor();
         var encryptedBytes = Convert.FromBase64String(encryptedPassword);
         var decryptedBytes = decryptor.TransformFinalBlock(encryptedBytes, 0, encryptedBytes.Length);
         return Encoding.UTF8.GetString(decryptedBytes);
     }
-    
+
     public static async Task SyncUserState(string username)
     {
         try
         {
             using var context = new AppDbContext();
             var user = await context.Users.FirstOrDefaultAsync(u => u.Username == username);
-            
+
             if (user != null)
             {
                 user.LastLoginAt = DateTime.UtcNow;
-                
+
                 if (string.IsNullOrEmpty(user.SecurityToken))
                 {
                     user.SecurityToken = Convert.ToBase64String(Guid.NewGuid().ToByteArray());
                     user.TokenExpiration = DateTime.UtcNow.AddDays(30);
                 }
-                
+
                 await context.SaveChangesAsync();
-                
+
                 ApplicationStateService.SaveLoginState(username, true, user.SecurityToken);
             }
         }
@@ -130,7 +130,7 @@ public static class DatabaseService
         {
             using var context = new AppDbContext();
             var user = await context.Users.FirstOrDefaultAsync(u => u.Username == username);
-            
+
             if (user == null)
             {
                 Console.WriteLine($"Failed to generate token: User {username} not found");
@@ -141,7 +141,7 @@ public static class DatabaseService
             user.SecurityToken = EncryptToken(rawToken);
             user.TokenExpiration = DateTime.UtcNow.AddDays(30);
             user.LastLoginAt = DateTime.UtcNow;
-            
+
             await context.SaveChangesAsync();
             return (true, rawToken);
         }
@@ -152,13 +152,14 @@ public static class DatabaseService
         }
     }
 
-    public static async Task<(bool success, string? token)> ValidateOrRefreshSecurityToken(string username, string? existingToken)
+    public static async Task<(bool success, string? token)> ValidateOrRefreshSecurityToken(string username,
+        string? existingToken)
     {
         try
         {
             using var context = new AppDbContext();
-            var user = await context.Users.FirstOrDefaultAsync(u => 
-                u.Username == username && 
+            var user = await context.Users.FirstOrDefaultAsync(u =>
+                u.Username == username &&
                 u.IsActive);
 
             if (user == null)
@@ -176,10 +177,7 @@ public static class DatabaseService
             if (existingToken != null)
             {
                 var encryptedToken = EncryptToken(existingToken);
-                if (user.SecurityToken == encryptedToken)
-                {
-                    return (true, existingToken);
-                }
+                if (user.SecurityToken == encryptedToken) return (true, existingToken);
             }
 
             var newToken = Convert.ToBase64String(Guid.NewGuid().ToByteArray());
@@ -201,7 +199,7 @@ public static class DatabaseService
         {
             using var context = new AppDbContext();
             var user = await context.Users.FirstOrDefaultAsync(u => u.Username == username);
-            
+
             if (user != null)
             {
                 user.SecurityToken = null;
@@ -220,7 +218,7 @@ public static class DatabaseService
         using var aes = Aes.Create();
         aes.Key = Encoding.UTF8.GetBytes(TokenKey.PadRight(32));
         aes.IV = new byte[16];
-        
+
         using var encryptor = aes.CreateEncryptor();
         var plainBytes = Encoding.UTF8.GetBytes(token);
         var encryptedBytes = encryptor.TransformFinalBlock(plainBytes, 0, plainBytes.Length);
@@ -232,7 +230,7 @@ public static class DatabaseService
         using var aes = Aes.Create();
         aes.Key = Encoding.UTF8.GetBytes(TokenKey.PadRight(32));
         aes.IV = new byte[16];
-        
+
         using var decryptor = aes.CreateDecryptor();
         var encryptedBytes = Convert.FromBase64String(encryptedToken);
         var decryptedBytes = decryptor.TransformFinalBlock(encryptedBytes, 0, encryptedBytes.Length);
