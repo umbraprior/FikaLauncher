@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace FikaLauncher.Services;
 
-public static class GitHubReadmeService
+public static class RepositoryReadmeService
 {
     private static readonly HttpClient _httpClient = new()
     {
@@ -17,7 +17,7 @@ public static class GitHubReadmeService
     private const string Repo = "Fika-Documentation";
     private const string Branch = "main";
 
-    static GitHubReadmeService()
+    static RepositoryReadmeService()
     {
         _httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("FikaLauncher", "1.0"));
         _httpClient.DefaultRequestHeaders.Accept.Add(

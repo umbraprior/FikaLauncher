@@ -39,7 +39,7 @@ public partial class AboutViewModel : ViewModelBase
         {
             Console.WriteLine("Starting LoadReadme");
 
-            var markdown = await GitHubReadmeService.GetReadmeContentAsync();
+            var markdown = await RepositoryReadmeService.GetReadmeContentAsync();
 
             Console.WriteLine("Markdown content loaded from cache or GitHub");
 

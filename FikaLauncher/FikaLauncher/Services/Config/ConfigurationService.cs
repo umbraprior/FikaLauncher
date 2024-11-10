@@ -119,7 +119,7 @@ public static class ConfigurationService
         Console.WriteLine(
             $"Applied settings - Language: {Settings.Language}, Theme: {(Settings.IsDarkTheme ? "Dark" : "Light")}");
 
-        await GitHubReadmeService.PreCacheReadmeAsync(Settings.Language);
+        await RepositoryReadmeService.PreCacheReadmeAsync(Settings.Language);
     }
 }
 

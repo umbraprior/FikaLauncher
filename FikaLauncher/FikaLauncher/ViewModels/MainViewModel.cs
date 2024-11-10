@@ -108,7 +108,7 @@ public partial class MainViewModel : ViewModelBase
     partial void OnLanguageChanged(string value)
     {
         LocalizationService.ChangeLanguage(value);
-        _ = GitHubReadmeService.PreCacheReadmeAsync(value);
+        _ = RepositoryReadmeService.PreCacheReadmeAsync(value);
     }
 
     public void ShowNotification(string title, string message, NotificationType type)

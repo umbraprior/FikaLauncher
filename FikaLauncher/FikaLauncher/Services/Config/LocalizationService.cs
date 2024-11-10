@@ -70,7 +70,7 @@ public class LocalizationService : INotifyPropertyChanged
             await Task.Run(async () =>
             {
                 await ConfigurationService.SaveSettingsAsync();
-                await GitHubReadmeService.PreCacheReadmeAsync(language);
+                await RepositoryReadmeService.PreCacheReadmeAsync(language);
             });
         }
     }

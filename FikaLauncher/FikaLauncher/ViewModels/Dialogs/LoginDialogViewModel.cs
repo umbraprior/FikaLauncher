@@ -81,7 +81,7 @@ public partial class LoginDialogViewModel : ViewModelBase
     partial void OnLanguageChanged(string value)
     {
         LocalizationService.ChangeLanguage(value);
-        _ = GitHubReadmeService.PreCacheReadmeAsync(value);
+        _ = RepositoryReadmeService.PreCacheReadmeAsync(value);
 
         if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             desktop.MainWindow?.InvalidateVisual();

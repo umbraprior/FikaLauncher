@@ -148,7 +148,7 @@ public partial class SettingsViewModel : ViewModelBase
             Task.Run(async () =>
             {
                 await ConfigurationService.SaveSettingsAsync();
-                await GitHubReadmeService.PreCacheReadmeAsync(value);
+                await RepositoryReadmeService.PreCacheReadmeAsync(value);
             });
         }
     }
