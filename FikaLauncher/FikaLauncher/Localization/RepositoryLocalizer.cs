@@ -37,7 +37,7 @@ public class RepositoryLocalizer : BaseLocalizer
     {
         var oldLanguage = _language;
         _language = language;
-        
+
         try
         {
             await LoadLanguageStrings(language);
@@ -56,14 +56,14 @@ public class RepositoryLocalizer : BaseLocalizer
         {
             if (_loadingLanguages.TryGetValue(language, out var isLoading) && isLoading)
                 return;
-            
+
             _loadingLanguages[language] = true;
         }
 
         try
         {
             var newStrings = await Services.RepositoryLocaleService.GetLocaleStrings(language);
-            
+
             if (newStrings == null)
             {
                 if (language != DefaultLanguage)
@@ -71,12 +71,13 @@ public class RepositoryLocalizer : BaseLocalizer
                     _language = DefaultLanguage;
                     await LoadLanguageStrings(DefaultLanguage);
                 }
+
                 return;
             }
 
             var oldStrings = _languageStrings;
             _languageStrings = newStrings;
-            
+
             if (oldStrings != null)
                 oldStrings.Clear();
         }

@@ -13,7 +13,7 @@ public class GitHubRepositoryService : BaseRepositoryService
     public override string BaseApiUrl => "https://api.github.com/";
     public override string RawContentUrl => "https://raw.githubusercontent.com/";
 
-    public GitHubRepositoryService(string owner, string repo, string branch) 
+    public GitHubRepositoryService(string owner, string repo, string branch)
         : base(owner, repo, branch)
     {
     }
@@ -23,10 +23,10 @@ public class GitHubRepositoryService : BaseRepositoryService
         try
         {
             using var rawClient = new HttpClient();
-            
+
             var fullPath = $"{_owner}/{_repo}/{_branch}/{filePath}";
             var url = $"{RawContentUrl}{fullPath}";
-            
+
             Console.WriteLine($"Downloading from: {RawContentUrl}{fullPath}");
 
             var response = await rawClient.GetAsync(url);
@@ -66,7 +66,7 @@ public class GitHubRepositoryService : BaseRepositoryService
                 return (null, null);
 
             var content = await response.Content.ReadAsStringAsync();
-            using var doc = System.Text.Json.JsonDocument.Parse(content);
+            using var doc = JsonDocument.Parse(content);
             var root = doc.RootElement;
 
             if (root.GetArrayLength() == 0)

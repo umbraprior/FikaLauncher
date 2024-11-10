@@ -79,8 +79,10 @@ public static class RepositoryTermsService
             var content = await _repository.DownloadContent(filePath);
             if (content != null)
             {
-                Console.WriteLine($"Successfully downloaded terms (length: {content.Length}, commit: {commitHash[..7]})");
-                await TermsCacheService.SaveToCache(content, TermsCacheService.GetCacheFilePath(language, isLauncherTerms),
+                Console.WriteLine(
+                    $"Successfully downloaded terms (length: {content.Length}, commit: {commitHash[..7]})");
+                await TermsCacheService.SaveToCache(content,
+                    TermsCacheService.GetCacheFilePath(language, isLauncherTerms),
                     commitHash, commitDate.Value);
                 return content;
             }
@@ -135,7 +137,7 @@ public static class RepositoryTermsService
     private static async Task<string> GetEnglishTerms(bool isLauncherTerms)
     {
         var englishCachePath = TermsCacheService.GetCacheFilePath("en-US", isLauncherTerms);
-        
+
         if (File.Exists(englishCachePath) && !await ShouldUpdateCache("en-US", isLauncherTerms))
         {
             var content = await TermsCacheService.ReadFromCache(englishCachePath);

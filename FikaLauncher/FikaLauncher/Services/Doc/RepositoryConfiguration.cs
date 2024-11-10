@@ -12,25 +12,25 @@ public static class RepositoryConfiguration
 {
     private static readonly Dictionary<string, RepositoryInfo> Repositories = new()
     {
-        ["FikaLauncher"] = new()
+        ["FikaLauncher"] = new RepositoryInfo
         {
             Owner = "umbraprior",
             Repository = "FikaLauncher",
             Branch = "main"
         },
-        ["FikaDocumentation"] = new()
+        ["FikaDocumentation"] = new RepositoryInfo
         {
             Owner = "project-fika",
             Repository = "Fika-Documentation",
             Branch = "main"
         },
-        ["FikaServer"] = new()
+        ["FikaServer"] = new RepositoryInfo
         {
             Owner = "project-fika",
             Repository = "Fika-Server",
             Branch = "main"
         },
-        ["FikaPlugin"] = new()
+        ["FikaPlugin"] = new RepositoryInfo
         {
             Owner = "project-fika",
             Repository = "Fika-Plugin",
@@ -41,9 +41,7 @@ public static class RepositoryConfiguration
     public static RepositoryInfo GetRepository(string name)
     {
         if (!Repositories.TryGetValue(name, out var repo))
-        {
             throw new ArgumentException($"Repository '{name}' not found in configuration", nameof(name));
-        }
         return repo;
     }
 }

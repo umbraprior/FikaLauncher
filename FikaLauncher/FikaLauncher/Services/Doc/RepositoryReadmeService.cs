@@ -80,7 +80,8 @@ public static class RepositoryReadmeService
             var content = await _repository.DownloadContent(filePath);
             if (content != null)
             {
-                Console.WriteLine($"Successfully downloaded content (length: {content.Length}, commit: {commitHash[..7]})");
+                Console.WriteLine(
+                    $"Successfully downloaded content (length: {content.Length}, commit: {commitHash[..7]})");
                 await ReadmeCacheService.SaveToCache(content, ReadmeCacheService.GetCacheFilePath(language), commitHash,
                     commitDate.Value);
                 return content;

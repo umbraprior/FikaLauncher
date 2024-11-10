@@ -37,10 +37,7 @@ public static class LocaleDiscoveryService
             }
 
             // Pre-cache all discovered locales
-            foreach (var locale in _availableLocales)
-            {
-                await PreCacheLocaleAsync(locale);
-            }
+            foreach (var locale in _availableLocales) await PreCacheLocaleAsync(locale);
         }
         catch (Exception ex)
         {

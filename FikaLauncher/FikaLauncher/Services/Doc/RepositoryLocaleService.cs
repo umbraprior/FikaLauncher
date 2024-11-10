@@ -78,7 +78,8 @@ public static class RepositoryLocaleService
             var content = await _repository.DownloadContent(filePath);
             if (content != null)
             {
-                Console.WriteLine($"Successfully downloaded locale (length: {content.Length}, commit: {commitHash[..7]})");
+                Console.WriteLine(
+                    $"Successfully downloaded locale (length: {content.Length}, commit: {commitHash[..7]})");
                 await LocaleCacheService.SaveToCache(content, LocaleCacheService.GetCacheFilePath(language),
                     commitHash, commitDate.Value);
                 return content;
@@ -133,7 +134,7 @@ public static class RepositoryLocaleService
     private static async Task<string> GetEnglishLocale()
     {
         var englishCachePath = LocaleCacheService.GetCacheFilePath("en-US");
-        
+
         if (File.Exists(englishCachePath) && !await ShouldUpdateCache("en-US"))
         {
             var content = await LocaleCacheService.ReadFromCache(englishCachePath);

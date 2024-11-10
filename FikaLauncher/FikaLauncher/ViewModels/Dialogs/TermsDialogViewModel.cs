@@ -62,7 +62,7 @@ public partial class TermsDialogViewModel : ViewModelBase
 
         if (!HasAcceptedLauncherTerms)
             IsLauncherTerms = true;
-        else if (!HasAcceptedFikaTerms) 
+        else if (!HasAcceptedFikaTerms)
             IsLauncherTerms = false;
 
         Dispatcher.UIThread.Post(async () => await LoadTerms());
@@ -73,13 +73,14 @@ public partial class TermsDialogViewModel : ViewModelBase
 
     private async Task LoadTerms()
     {
-        try 
+        try
         {
             var isDark = App.Current?.RequestedThemeVariant == Avalonia.Styling.ThemeVariant.Dark;
-            
+
             // First ensure terms are cached
-            await RepositoryTermsService.PreCacheTermsAsync(LocalizationService.Instance.CurrentLanguage, IsLauncherTerms);
-            
+            await RepositoryTermsService.PreCacheTermsAsync(LocalizationService.Instance.CurrentLanguage,
+                IsLauncherTerms);
+
             // Then get the processed terms
             var terms = await RepositoryTermsService.GetProcessedTerms(isDark, IsLauncherTerms);
 

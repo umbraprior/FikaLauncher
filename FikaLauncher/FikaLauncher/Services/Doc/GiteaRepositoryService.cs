@@ -15,7 +15,7 @@ public class GiteaRepositoryService : BaseRepositoryService
     public override string BaseApiUrl => $"{_instanceUrl}/api/v1/";
     public override string RawContentUrl => $"{_instanceUrl}/raw/";
 
-    public GiteaRepositoryService(string instanceUrl, string owner, string repo, string branch) 
+    public GiteaRepositoryService(string instanceUrl, string owner, string repo, string branch)
         : base(owner, repo, branch)
     {
         _instanceUrl = instanceUrl.TrimEnd('/');
@@ -38,7 +38,7 @@ public class GiteaRepositoryService : BaseRepositoryService
                 return (null, null);
 
             var content = await response.Content.ReadAsStringAsync();
-            using var doc = System.Text.Json.JsonDocument.Parse(content);
+            using var doc = JsonDocument.Parse(content);
             var root = doc.RootElement;
 
             if (root.GetArrayLength() == 0)
