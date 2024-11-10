@@ -82,6 +82,12 @@ public static class RepositoryReadmeService
                 return null;
             }
 
+            var (cachedContent, cacheInfo) = await ReadmeCacheService.GetCachedReadme(language, commitHash);
+            if (cachedContent != null && cacheInfo != null)
+            {
+                return cachedContent;
+            }
+
             var content = await _repository.DownloadContent(filePath);
             if (content != null)
             {
