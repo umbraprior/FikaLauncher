@@ -10,30 +10,45 @@ namespace FikaLauncher.Services;
 public static class LocaleDiscoveryService
 {
     private static readonly IRepositoryService _repository;
-    private static readonly HashSet<string> _availableLocales = new();
+    private static readonly HashSet<string> _availableLocales = new() { "en-US" }; // Always include English
+    private const string BaseUrl = "https://raw.githubusercontent.com";
+    private const string RepoPath = "umbraprior/FikaLauncher";
+    private const string Branch = "refs/heads/main";
     private const string LocaleDirectory = "Languages";
+    private const int CommitGracePeriodMinutes = 10;
+
+    public static IReadOnlyCollection<string> AvailableLocales => _availableLocales;
 
     static LocaleDiscoveryService()
     {
         var repoInfo = RepositoryConfiguration.GetRepository("FikaLauncher");
-        _repository = RepositoryServiceFactory.Create("https://github.com", repoInfo);
-        _availableLocales.Add("en-US"); // Always available
+        _repository = RepositoryServiceFactory.Create(BaseUrl, repoInfo);
     }
 
-    public static IReadOnlyCollection<string> AvailableLocales => _availableLocales;
+    private static string GetGitHubPath(string relativePath)
+    {
+        return $"{BaseUrl}/{RepoPath}/{Branch}/{relativePath}";
+    }
 
     public static async Task DiscoverAvailableLocales()
     {
         try
         {
-            var files = await _repository.GetDirectoryContents(LocaleDirectory);
-            if (files == null) return;
+            var directories = await _repository.GetDirectoryContents(LocaleDirectory);
+            if (directories == null) return;
 
-            foreach (var file in files.Where(f => f.EndsWith(".json")))
+            foreach (var dir in directories)
             {
-                var locale = file.Replace(".json", "");
-                _availableLocales.Add(locale);
-                Console.WriteLine($"Discovered locale: {locale}");
+                if (dir.EndsWith("/"))
+                {
+                    var locale = dir.TrimEnd('/');
+                    var stringsPath = GetGitHubPath($"{LocaleDirectory}/{locale}/strings.json");
+                    if (await _repository.DoesFileExist(stringsPath))
+                    {
+                        _availableLocales.Add(locale);
+                        Console.WriteLine($"Discovered locale: {locale}");
+                    }
+                }
             }
 
             // Only pre-cache English and current system language if different
@@ -53,16 +68,14 @@ public static class LocaleDiscoveryService
     {
         try
         {
-            var filePath = $"{LocaleDirectory}/{language}.json";
+            var filePath = $"{LocaleDirectory}/{language}/strings.json";
             var (latestCommitHash, commitDate) = await _repository.GetLatestCommitInfo(filePath);
             if (latestCommitHash == null || commitDate == null)
                 return;
 
-            // Add 15-minute delay for recent commits
-            if (DateTime.UtcNow - commitDate.Value < TimeSpan.FromMinutes(15))
+            if (DateTime.UtcNow - commitDate.Value < TimeSpan.FromMinutes(CommitGracePeriodMinutes))
             {
-                Console.WriteLine(
-                    $"Skipping cache update for {language} - commit is too recent ({commitDate.Value:HH:mm:ss UTC})");
+                Console.WriteLine($"Skipping cache update for {language} - commit is too recent ({commitDate.Value:HH:mm:ss UTC})");
                 return;
             }
 
@@ -87,7 +100,7 @@ public static class LocaleDiscoveryService
     {
         try
         {
-            var filePath = $"{LocaleDirectory}/{language}.json";
+            var filePath = $"{LocaleDirectory}/{language}/strings.json";
             var (latestCommitHash, _) = await _repository.GetLatestCommitInfo(filePath);
             if (latestCommitHash == null)
                 return false;

@@ -10,11 +10,13 @@ namespace FikaLauncher.Services;
 public static class RepositoryReadmeService
 {
     private static readonly IRepositoryService _repository;
+    private const int CommitGracePeriodMinutes = 10;
+    private static readonly RepositoryInfo _repoInfo;
 
     static RepositoryReadmeService()
     {
-        var repoInfo = RepositoryConfiguration.GetRepository("FikaDocumentation");
-        _repository = RepositoryServiceFactory.Create("https://github.com", repoInfo);
+        _repoInfo = RepositoryConfiguration.GetRepository("FikaDocumentation");
+        _repository = RepositoryServiceFactory.Create("https://github.com", _repoInfo);
     }
 
     private static string GetGitHubFilePath(string language)
@@ -71,7 +73,7 @@ public static class RepositoryReadmeService
             if (commitHash == null || !commitDate.HasValue)
                 return null;
 
-            if (DateTime.UtcNow - commitDate.Value < TimeSpan.FromMinutes(15))
+            if (DateTime.UtcNow - commitDate.Value < TimeSpan.FromMinutes(CommitGracePeriodMinutes))
             {
                 Console.WriteLine(
                     $"Skipping download for {language} - commit is too recent ({commitDate.Value:HH:mm:ss UTC})");

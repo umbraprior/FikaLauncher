@@ -10,17 +10,27 @@ namespace FikaLauncher.Services;
 public static class RepositoryTermsService
 {
     private static readonly IRepositoryService _repository;
+    private const string BaseUrl = "https://raw.githubusercontent.com";
+    private const string RepoPath = "umbraprior/FikaLauncher";
+    private const string Branch = "refs/heads/main";
+    private const int CommitGracePeriodMinutes = 10;
 
     static RepositoryTermsService()
     {
         var repoInfo = RepositoryConfiguration.GetRepository("FikaLauncher");
-        _repository = RepositoryServiceFactory.Create("https://github.com", repoInfo);
+        _repository = RepositoryServiceFactory.Create(BaseUrl, repoInfo);
+    }
+
+    private static string GetGitHubPath(string relativePath)
+    {
+        return $"{BaseUrl}/{RepoPath}/{Branch}/{relativePath}";
     }
 
     private static string GetTermsPath(string language, bool isLauncherTerms)
     {
-        var folder = isLauncherTerms ? "Launcher" : "Fika";
-        return $"Languages/Terms/{folder}/{language}.md";
+        var fileName = isLauncherTerms ? "launcher-terms.md" : "fika-terms.md";
+        var relativePath = $"Languages/{language}/{fileName}";
+        return GetGitHubPath(relativePath);
     }
 
     private static async Task<(string? commitHash, DateTime? commitDate)> GetLatestCommitInfo(string filePath)
@@ -70,7 +80,7 @@ public static class RepositoryTermsService
             if (commitHash == null || !commitDate.HasValue)
                 return null;
 
-            if (DateTime.UtcNow - commitDate.Value < TimeSpan.FromMinutes(15))
+            if (DateTime.UtcNow - commitDate.Value < TimeSpan.FromMinutes(CommitGracePeriodMinutes))
             {
                 Console.WriteLine(
                     $"Skipping download for {language} - commit is too recent ({commitDate.Value:HH:mm:ss UTC})");
@@ -446,15 +456,23 @@ public static class RepositoryTermsService
         try
         {
             var assembly = typeof(RepositoryTermsService).Assembly;
-            var folder = isLauncherTerms ? "Launcher" : "Fika";
-            var resourcePath = $"FikaLauncher.Languages.Terms.{folder}.{language}.md";
+            var fileName = isLauncherTerms ? "launcher-terms.md" : "fika-terms.md";
+            
+            // Convert hyphen to underscore for resource lookup
+            var resourceLanguage = language.Replace("-", "_");
+            var resourcePath = $"FikaLauncher.Languages.{resourceLanguage}.{fileName}";
 
             using var stream = assembly.GetManifestResourceStream(resourcePath);
             if (stream == null)
+            {
+                Console.WriteLine($"No embedded terms found for {language}");
                 return null;
+            }
 
             using var reader = new StreamReader(stream);
-            return reader.ReadToEnd();
+            var content = reader.ReadToEnd();
+            Console.WriteLine($"Successfully loaded embedded terms for {language}");
+            return content;
         }
         catch (Exception ex)
         {
