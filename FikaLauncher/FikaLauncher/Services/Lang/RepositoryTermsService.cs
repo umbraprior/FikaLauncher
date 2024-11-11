@@ -114,7 +114,6 @@ public static class RepositoryTermsService
     {
         try
         {
-            // Try repository first
             try
             {
                 if (language != "en-US" && !await DoesLanguageTermsExist(language, isLauncherTerms))
@@ -127,12 +126,10 @@ public static class RepositoryTermsService
                 var (latestCommitHash, commitDate) = await GetLatestCommitInfo(filePath);
                 if (latestCommitHash != null)
                 {
-                    // Try cache
                     var (cachedContent, cacheInfo) =
                         await TermsCacheService.GetCachedTerms(language, latestCommitHash, isLauncherTerms);
                     if (cachedContent != null) return await ProcessTermsContent(cachedContent, isDark);
-
-                    // Try download
+                    
                     var downloadedContent = await DownloadTermsContent(language, isLauncherTerms);
                     if (downloadedContent != null) return await ProcessTermsContent(downloadedContent, isDark);
                 }
@@ -141,16 +138,14 @@ public static class RepositoryTermsService
             {
                 Console.WriteLine($"Failed to load terms from repository: {ex.Message}");
             }
-
-            // Try embedded resources
+            
             var embeddedContent = GetEmbeddedTerms(language, isLauncherTerms);
             if (embeddedContent != null)
             {
                 Console.WriteLine($"Successfully loaded embedded terms for {language}");
                 return await ProcessTermsContent(embeddedContent, isDark);
             }
-
-            // Final fallback to embedded English
+            
             if (language != "en-US")
             {
                 Console.WriteLine("Falling back to embedded English terms");
@@ -398,7 +393,6 @@ public static class RepositoryTermsService
 
         try
         {
-            // Try repository first
             try
             {
                 if (currentLanguage != "en-US" && !await DoesLanguageTermsExist(currentLanguage, isLauncherTerms))
@@ -411,12 +405,10 @@ public static class RepositoryTermsService
                 var (latestCommitHash, commitDate) = await GetLatestCommitInfo(filePath);
                 if (latestCommitHash != null)
                 {
-                    // Try cache first
                     var (cachedContent, cacheInfo) =
                         await TermsCacheService.GetCachedTerms(currentLanguage, latestCommitHash, isLauncherTerms);
                     if (cachedContent != null) return await ProcessTermsContent(cachedContent, isDark);
-
-                    // Try downloading
+                    
                     var downloadedContent = await DownloadTermsContent(currentLanguage, isLauncherTerms);
                     if (downloadedContent != null) return await ProcessTermsContent(downloadedContent, isDark);
                 }
@@ -425,16 +417,14 @@ public static class RepositoryTermsService
             {
                 Console.WriteLine($"Failed to load terms from repository: {ex.Message}");
             }
-
-            // Try embedded resources
+            
             var embeddedContent = GetEmbeddedTerms(currentLanguage, isLauncherTerms);
             if (embeddedContent != null)
             {
                 Console.WriteLine($"Successfully loaded embedded terms for {currentLanguage}");
                 return await ProcessTermsContent(embeddedContent, isDark);
             }
-
-            // Final fallback to embedded English
+            
             if (currentLanguage != "en-US")
             {
                 Console.WriteLine("Falling back to embedded English terms");
@@ -458,7 +448,6 @@ public static class RepositoryTermsService
             var assembly = typeof(RepositoryTermsService).Assembly;
             var fileName = isLauncherTerms ? "launcher-terms.md" : "fika-terms.md";
             
-            // Convert hyphen to underscore for resource lookup
             var resourceLanguage = language.Replace("-", "_");
             var resourcePath = $"FikaLauncher.Languages.{resourceLanguage}.{fileName}";
 

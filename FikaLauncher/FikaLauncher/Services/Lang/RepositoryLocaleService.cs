@@ -37,21 +37,18 @@ public static class RepositoryLocaleService
 
             if (latestCommitHash == null || commitDate == null)
                 return (null, null);
-
-            // Add grace period check for recent commits
+            
             if (DateTime.UtcNow - commitDate.Value < TimeSpan.FromMinutes(CommitGracePeriodMinutes))
             {
                 Console.WriteLine(
                     $"Skipping download for {language} - commit is too recent ({commitDate.Value:HH:mm:ss UTC})");
                 return (null, null);
             }
-
-            // Check cache first
+            
             var (cachedContent, cacheInfo) = await LocaleCacheService.GetCachedLocale(language, latestCommitHash);
             if (cachedContent != null && cacheInfo != null)
                 return (JsonSerializer.Deserialize<Dictionary<string, string>>(cachedContent), cacheInfo);
-
-            // Download if not in cache
+            
             var content = await _repository.DownloadContent(filePath);
             if (content == null)
             {

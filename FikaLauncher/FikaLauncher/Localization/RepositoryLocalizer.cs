@@ -71,7 +71,6 @@ public class RepositoryLocalizer : BaseLocalizer
 
         try
         {
-            // Try loading from repository first
             try
             {
                 var (strings, _) = await RepositoryLocaleService.GetLocaleStringsWithInfo(language);
@@ -85,8 +84,7 @@ public class RepositoryLocalizer : BaseLocalizer
             {
                 Console.WriteLine($"Failed to load from repository: {ex.Message}");
             }
-
-            // Try loading from cache
+            
             try
             {
                 var cacheFiles = Directory.GetFiles(
@@ -113,8 +111,7 @@ public class RepositoryLocalizer : BaseLocalizer
             {
                 Console.WriteLine($"Failed to load from cache: {ex.Message}");
             }
-
-            // Try fallback localizer
+            
             try
             {
                 if (!_fallbackLocalizer.Languages.Contains(language))
