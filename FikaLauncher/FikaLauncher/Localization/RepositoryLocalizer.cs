@@ -57,20 +57,25 @@ public class RepositoryLocalizer : BaseLocalizer
 
     private async Task LoadLanguageStrings(string language)
     {
+        if (string.IsNullOrEmpty(language))
+        {
+            language = DefaultLanguage;
+        }
+
         lock (_loadLock)
         {
             if (_loadingLanguages.TryGetValue(language, out var isLoading) && isLoading)
                 return;
-
             _loadingLanguages[language] = true;
         }
 
         try
         {
+            // Try loading from repository first
             try
             {
-                var (strings, cacheInfo) = await RepositoryLocaleService.GetLocaleStringsWithInfo(language);
-                if (strings != null && cacheInfo != null)
+                var (strings, _) = await RepositoryLocaleService.GetLocaleStringsWithInfo(language);
+                if (strings != null)
                 {
                     _languageStrings = strings;
                     return;
@@ -81,6 +86,7 @@ public class RepositoryLocalizer : BaseLocalizer
                 Console.WriteLine($"Failed to load from repository: {ex.Message}");
             }
 
+            // Try loading from cache
             try
             {
                 var cacheFiles = Directory.GetFiles(
@@ -108,17 +114,18 @@ public class RepositoryLocalizer : BaseLocalizer
                 Console.WriteLine($"Failed to load from cache: {ex.Message}");
             }
 
+            // Try fallback localizer
             try
             {
                 if (!_fallbackLocalizer.Languages.Contains(language))
                 {
                     if (language != DefaultLanguage)
                     {
+                        Console.WriteLine($"Language {language} not found in fallback, switching to {DefaultLanguage}");
                         _language = DefaultLanguage;
                         await LoadLanguageStrings(DefaultLanguage);
+                        return;
                     }
-
-                    return;
                 }
 
                 _fallbackLocalizer.Language = language;

@@ -36,16 +36,21 @@ public class JsonLocalizer(string languageJsonDirectory = "") : BaseLocalizer
         if (!Directory.Exists(_languageJsonDirectory))
             throw new FileNotFoundException(_languageJsonDirectory);
 
-        foreach (var file in Directory.GetFiles(_languageJsonDirectory, "*.json"))
+        // Look for locale directories
+        foreach (var dir in Directory.GetDirectories(_languageJsonDirectory))
         {
-            var language = Path.GetFileNameWithoutExtension(file);
-            _languages.Add(language);
+            var localeName = Path.GetFileName(dir);
+            var stringsPath = Path.Combine(dir, "strings.json");
+            if (File.Exists(stringsPath))
+            {
+                _languages.Add(localeName);
+            }
         }
 
         if (!_languages.Contains(_language))
             _language = DefaultLanguage;
 
-        var languageFile = Path.Combine(_languageJsonDirectory, _language + ".json");
+        var languageFile = Path.Combine(_languageJsonDirectory, _language, "strings.json");
         if (!File.Exists(languageFile))
             throw new FileNotFoundException($"No language file {languageFile}");
 
@@ -58,24 +63,44 @@ public class JsonLocalizer(string languageJsonDirectory = "") : BaseLocalizer
     {
         var assembly = typeof(JsonLocalizer).Assembly;
         var resourceNames = assembly.GetManifestResourceNames()
-            .Where(x => x.EndsWith(".json"))
+            .Where(x => x.EndsWith("strings.json"))
             .ToList();
+
+        Console.WriteLine("Available embedded resources:");
+        foreach (var name in resourceNames)
+        {
+            Console.WriteLine($"  {name}");
+        }
 
         foreach (var resource in resourceNames)
         {
-            var language = Path.GetFileNameWithoutExtension(
-                resource.Split('.').Reverse().Skip(1).First()
-            );
-            _languages.Add(language);
+            var cleanPath = resource.Replace('\\', '.');
+            var parts = cleanPath.Split('.');
+            var languageIndex = Array.IndexOf(parts, "Languages") + 1;
+            if (languageIndex > 0 && languageIndex < parts.Length - 1)
+            {
+                var language = parts[languageIndex].Replace("_", "-").Replace("\\", "");
+                _languages.Add(language);
+                Console.WriteLine($"Found language: {language}");
+            }
         }
 
         if (!_languages.Contains(_language))
+        {
             _language = DefaultLanguage;
+            Console.WriteLine($"Language not found, falling back to: {_language}");
+        }
 
-        var resourcePath = $"FikaLauncher.Languages.{_language}.json";
+        var resourceLanguage = _language.Replace("-", "_");
+        var resourcePath = $"FikaLauncher.Languages.{resourceLanguage}.strings.json";
+        Console.WriteLine($"Trying to load resource: {resourcePath}");
+        
         using var stream = assembly.GetManifestResourceStream(resourcePath);
         if (stream == null)
-            throw new FileNotFoundException($"No embedded resource found: {resourcePath}");
+        {
+            Console.WriteLine($"Available languages: {string.Join(", ", _languages)}");
+            throw new FileNotFoundException($"No embedded resource found for language: {_language}");
+        }
 
         using var reader = new StreamReader(stream);
         var json = reader.ReadToEnd();

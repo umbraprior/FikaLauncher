@@ -10,11 +10,20 @@ namespace FikaLauncher.Services;
 public static class RepositoryLocaleService
 {
     private static readonly IRepositoryService _repository;
+    private const string BaseUrl = "https://raw.githubusercontent.com";
+    private const string RepoPath = "umbraprior/FikaLauncher";
+    private const string Branch = "refs/heads/main";
+    private const int CommitGracePeriodMinutes = 10;
 
     static RepositoryLocaleService()
     {
         var repoInfo = RepositoryConfiguration.GetRepository("FikaLauncher");
-        _repository = RepositoryServiceFactory.Create("https://github.com", repoInfo);
+        _repository = RepositoryServiceFactory.Create(BaseUrl, repoInfo);
+    }
+
+    public static string GetGitHubPath(string relativePath)
+    {
+        return $"{BaseUrl}/{RepoPath}/{Branch}/{relativePath}";
     }
 
     public static async Task<(Dictionary<string, string>? strings, LocaleCacheService.LocaleInfo? info)>
@@ -22,14 +31,15 @@ public static class RepositoryLocaleService
     {
         try
         {
-            var filePath = $"Languages/{language}.json";
+            var filePath = $"Languages/{language}/strings.json";
+            var fullPath = GetGitHubPath(filePath);
             var (latestCommitHash, commitDate) = await _repository.GetLatestCommitInfo(filePath);
 
             if (latestCommitHash == null || commitDate == null)
                 return (null, null);
 
-            // Add 15-minute delay check for recent commits
-            if (DateTime.UtcNow - commitDate.Value < TimeSpan.FromMinutes(15))
+            // Add grace period check for recent commits
+            if (DateTime.UtcNow - commitDate.Value < TimeSpan.FromMinutes(CommitGracePeriodMinutes))
             {
                 Console.WriteLine(
                     $"Skipping download for {language} - commit is too recent ({commitDate.Value:HH:mm:ss UTC})");
