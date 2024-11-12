@@ -1,3 +1,12 @@
 files:
-  - source: /FikaLauncher/FikaLauncher/Languages/
-    translation: /Languages/%locale%/%original_file_name%
+  - source: /FikaLauncher/FikaLauncher/Languages/en-US/**/*
+    translation: /Languages-WIP/%locale%/%original_file_name%
+
+preserve_hierarchy: true
+commit_message: "chore: new translations for %language%"
+pull_request_title: "chore: new Crowdin translations"
+pull_request_labels:
+  - translations
+  - crowdin
+
+pull_request_base_branch_name: "translations"

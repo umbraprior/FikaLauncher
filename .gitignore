@@ -221,6 +221,9 @@ project.lock.json
 # UWP Projects
 AppPackages/
 
-#####
-# End of core ignore list, below put you custom 'per project' settings (patterns or path)
-#####
+# Ignore work-in-progress translations
+Languages-WIP/
+
+# Don't ignore the Languages folder itself
+!Languages/
+!Languages/en-US/
