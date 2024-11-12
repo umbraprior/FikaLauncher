@@ -1,0 +1,10 @@
+*
+!.gitignore
+!crowdin.yml
+!Languages-WIP/
+!Languages-WIP/**
+!FikaLauncher/
+!FikaLauncher/FikaLauncher/
+!FikaLauncher/FikaLauncher/Languages/
+!FikaLauncher/FikaLauncher/Languages/en-US/
+!FikaLauncher/FikaLauncher/Languages/en-US/**
