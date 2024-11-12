@@ -29,9 +29,10 @@ jobs:
           # Remove everything
           git rm -rf .
           
-          # Create directories
+          # Create directories and .gitkeep files
           mkdir -p FikaLauncher/FikaLauncher/Languages/en-US
           mkdir -p Languages-WIP
+          touch Languages-WIP/.gitkeep
           
           # Copy source files from main
           git checkout main -- FikaLauncher/FikaLauncher/Languages/en-US/
@@ -53,7 +54,19 @@ jobs:
           
           pull_request_base_branch_name: "main"' > crowdin.yml
           
-          # Commit and push
+          # Add .gitignore to keep Languages-WIP
+          echo '*
+          !.gitignore
+          !crowdin.yml
+          !Languages-WIP/
+          !Languages-WIP/**
+          !FikaLauncher/
+          !FikaLauncher/FikaLauncher/
+          !FikaLauncher/FikaLauncher/Languages/
+          !FikaLauncher/FikaLauncher/Languages/en-US/
+          !FikaLauncher/FikaLauncher/Languages/en-US/**' > .gitignore
+          
+          # Stage and commit
           git add -A
           git commit -m "chore: setup clean translations branch"
           git push -f origin translations
