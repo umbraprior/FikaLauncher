@@ -1,15 +1,12 @@
-project_id: "fikalauncher"
+project_id: fikalauncher
 api_token_env: CROWDIN_PERSONAL_TOKEN
-
+pull_request_base_branch_name: main
 files:
   - source: /FikaLauncher/FikaLauncher/Languages/en-US/**/*
     translation: /Languages-WIP/%locale%/%original_file_name%
-
-preserve_hierarchy: true
-commit_message: "chore: new translations for %language%"
-pull_request_title: "chore: new Crowdin translations"
+preserve_hierarchy: 1
+commit_message: 'chore: new translations for %language%'
+pull_request_title: 'chore: new Crowdin translations'
 pull_request_labels:
   - translations
   - crowdin
-
-pull_request_base_branch_name: "main"
