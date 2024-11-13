@@ -3,16 +3,26 @@
 <div align="center">
 
 [![Framework](https://img.shields.io/badge/Framework-Avalonia_UI-blue)](https://avaloniaui.net/)
-[![License](https://img.shields.io/badge/License-CC_BY--NC--SA_4.0-green)](https://github.com/umbraprior/FikaLauncher/blob/main/LICENSE)
+[![License](https://img.shields.io/badge/License-CC_BY--NC--SA_4.0-yellow)](https://github.com/umbraprior/FikaLauncher/blob/main/LICENSE)
+
+[![Documentation](https://img.shields.io/badge/Docs-Read_Now-green)](https://github.com/umbraprior/FikaLauncher-Documentation)
 
 </div>
 
-> [!IMPORTANT]
-> FikaLauncher is currently in early development and not fully functional. Features are being actively developed and may change significantly.
+### Translating
+
+FikaLauncher is localized by the community at [Crowdin](https://crowdin.com/project/fikalauncher). Feel free to help us translate it into any available languages!
+
+> [!NOTE]
+All translations are from community members, if you find any incorrect/offensive/vulgar translations, let us know
+
 
 ## About
 
 FikaLauncher is an all-in-one launcher for [Project Fika](https://github.com/project-fika), the multiplayer co-op modification for [SP-Tarkov](https://sp-tarkov.com/). Built with AvaloniaUI, it aims to provide a seamless experience for managing your Project Fika installation and multiplayer sessions.
+
+> [!WARNING]
+> FikaLauncher is currently in early development and not fully functional. Features are being actively developed and may change significantly.
 
 ## Requirements
 
@@ -94,7 +104,7 @@ Contributions are welcome! Please feel free to submit a Pull Request. For major 
 
 ## Disclaimer
 
-> [!WARNING]
+> [!CAUTION]
 > This project is not affiliated with Battlestate Games, SP-Tarkov, Project Fika, or their development teams. It is an independent tool designed to enhance the Project Fika experience. Use of this launcher requires legitimate ownership of Escape from Tarkov.
 
 ## License
