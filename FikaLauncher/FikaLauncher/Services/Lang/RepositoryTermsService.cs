@@ -11,19 +11,17 @@ public static class RepositoryTermsService
 {
     private static readonly IRepositoryService _repository;
     private const string BaseUrl = "https://raw.githubusercontent.com";
-    private const string RepoPath = "umbraprior/FikaLauncher";
-    private const string Branch = "refs/heads/main";
     private const int CommitGracePeriodMinutes = 10;
-
+    
     static RepositoryTermsService()
     {
-        var repoInfo = RepositoryConfiguration.GetRepository("FikaLauncher");
+        var repoInfo = RepositoryConfiguration.GetRepository("FikaLauncherTranslations");
         _repository = RepositoryServiceFactory.Create(BaseUrl, repoInfo);
     }
 
     private static string GetGitHubPath(string relativePath)
     {
-        return $"{BaseUrl}/{RepoPath}/{Branch}/{relativePath}";
+        return $"{BaseUrl}/{relativePath}";
     }
 
     private static string GetTermsPath(string language, bool isLauncherTerms)

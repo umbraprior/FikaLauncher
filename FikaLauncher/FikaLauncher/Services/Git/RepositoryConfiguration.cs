@@ -18,6 +18,12 @@ public static class RepositoryConfiguration
             Repository = "FikaLauncher",
             Branch = "main"
         },
+        ["FikaLauncherTranslations"] = new RepositoryInfo
+        {
+            Owner = "umbraprior",
+            Repository = "FikaLauncher-Documentation",
+            Branch = "main"
+        },
         ["FikaDocumentation"] = new RepositoryInfo
         {
             Owner = "project-fika",

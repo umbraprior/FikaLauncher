@@ -10,10 +10,8 @@ namespace FikaLauncher.Services;
 public static class LocaleDiscoveryService
 {
     private static readonly IRepositoryService _repository;
-    private static readonly HashSet<string> _availableLocales = new() { "en-US" }; // Always include English
+    private static readonly HashSet<string> _availableLocales = new() { "en-US" };
     private const string BaseUrl = "https://raw.githubusercontent.com";
-    private const string RepoPath = "umbraprior/FikaLauncher";
-    private const string Branch = "refs/heads/main";
     private const string LocaleDirectory = "Languages";
     private const int CommitGracePeriodMinutes = 10;
 
@@ -21,13 +19,13 @@ public static class LocaleDiscoveryService
 
     static LocaleDiscoveryService()
     {
-        var repoInfo = RepositoryConfiguration.GetRepository("FikaLauncher");
+        var repoInfo = RepositoryConfiguration.GetRepository("FikaLauncherTranslations");
         _repository = RepositoryServiceFactory.Create(BaseUrl, repoInfo);
     }
 
     private static string GetGitHubPath(string relativePath)
     {
-        return $"{BaseUrl}/{RepoPath}/{Branch}/{relativePath}";
+        return $"{BaseUrl}/{relativePath}";
     }
 
     public static async Task DiscoverAvailableLocales()
@@ -39,24 +37,16 @@ public static class LocaleDiscoveryService
 
             foreach (var dir in directories)
             {
-                if (dir.EndsWith("/"))
+                var locale = Path.GetFileName(dir);
+                if (locale != "en-US") // Skip English as it's embedded
                 {
-                    var locale = dir.TrimEnd('/');
-                    var stringsPath = GetGitHubPath($"{LocaleDirectory}/{locale}/strings.json");
-                    if (await _repository.DoesFileExist(stringsPath))
+                    var hasRequiredFiles = await ValidateLocaleDirectory(locale);
+                    if (hasRequiredFiles)
                     {
                         _availableLocales.Add(locale);
-                        Console.WriteLine($"Discovered locale: {locale}");
                     }
                 }
             }
-
-            // Only pre-cache English and current system language if different
-            var currentLanguage = System.Globalization.CultureInfo.CurrentCulture.Name;
-            await PreCacheLocaleAsync("en-US");
-
-            if (currentLanguage != "en-US" && _availableLocales.Contains(currentLanguage))
-                await PreCacheLocaleAsync(currentLanguage);
         }
         catch (Exception ex)
         {
@@ -64,8 +54,28 @@ public static class LocaleDiscoveryService
         }
     }
 
+    private static async Task<bool> ValidateLocaleDirectory(string locale)
+    {
+        var requiredFiles = new[]
+        {
+            $"{LocaleDirectory}/{locale}/strings.json",
+            $"{LocaleDirectory}/{locale}/launcher-terms.md",
+            $"{LocaleDirectory}/{locale}/fika-terms.md"
+        };
+
+        foreach (var file in requiredFiles)
+        {
+            if (!await _repository.DoesFileExist(file))
+                return false;
+        }
+
+        return true;
+    }
+
     public static async Task PreCacheLocaleAsync(string language)
     {
+        if (language == "en-US") return; // Skip precaching for English
+        
         try
         {
             var filePath = $"{LocaleDirectory}/{language}/strings.json";
