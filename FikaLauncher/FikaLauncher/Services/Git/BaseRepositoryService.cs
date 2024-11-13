@@ -26,10 +26,7 @@ public abstract class BaseRepositoryService : IRepositoryService
 
     protected virtual void ConfigureHttpClient()
     {
-        if (!string.IsNullOrEmpty(BaseApiUrl))
-        {
-            _client.BaseAddress = new Uri(BaseApiUrl.TrimEnd('/') + "/");
-        }
+        if (!string.IsNullOrEmpty(BaseApiUrl)) _client.BaseAddress = new Uri(BaseApiUrl.TrimEnd('/') + "/");
     }
 
     public virtual string GetRawContentUrl(string path)
