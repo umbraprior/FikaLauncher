@@ -16,7 +16,7 @@ public static class RepositoryReadmeService
     static RepositoryReadmeService()
     {
         _repoInfo = RepositoryConfiguration.GetRepository("FikaDocumentation");
-        _repository = RepositoryServiceFactory.Create("https://github.com", _repoInfo);
+        _repository = RepositoryServiceFactory.Create("https://api.github.com", _repoInfo);
     }
 
     private static string GetGitHubFilePath(string language)

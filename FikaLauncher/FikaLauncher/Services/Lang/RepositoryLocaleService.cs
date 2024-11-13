@@ -17,7 +17,7 @@ public static class RepositoryLocaleService
     static RepositoryLocaleService()
     {
         var repoInfo = RepositoryConfiguration.GetRepository("FikaLauncherTranslations");
-        _repository = RepositoryServiceFactory.Create(BaseUrl, repoInfo);
+        _repository = RepositoryServiceFactory.Create("https://api.github.com", repoInfo);
     }
 
     public static string GetGitHubPath(string relativePath)

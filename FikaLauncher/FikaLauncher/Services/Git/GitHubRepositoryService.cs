@@ -10,48 +10,19 @@ namespace FikaLauncher.Services.Doc;
 
 public class GitHubRepositoryService : BaseRepositoryService
 {
-    public override string BaseApiUrl => "https://api.github.com/";
-    public override string RawContentUrl => "https://raw.githubusercontent.com/";
+    public override string BaseApiUrl => "https://api.github.com";
+    public override string RawContentUrl => "https://raw.githubusercontent.com";
 
     public GitHubRepositoryService(string owner, string repo, string branch)
         : base(owner, repo, branch)
     {
     }
 
-    public override async Task<string?> DownloadContent(string filePath)
-    {
-        try
-        {
-            using var rawClient = new HttpClient();
-
-            var fullPath = $"{_owner}/{_repo}/{_branch}/{filePath}";
-            var url = $"{RawContentUrl}{fullPath}";
-
-            Console.WriteLine($"Downloading from: {RawContentUrl}{fullPath}");
-
-            var response = await rawClient.GetAsync(url);
-            if (response.IsSuccessStatusCode)
-            {
-                var content = await response.Content.ReadAsStringAsync();
-                Console.WriteLine($"Successfully downloaded content (length: {content.Length})");
-                return content;
-            }
-
-            Console.WriteLine($"Download failed with status: {response.StatusCode}");
-            return null;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error downloading content: {ex.Message}");
-            return null;
-        }
-    }
-
     protected override void ConfigureHttpClient()
     {
-        SetBaseAddress();
-        _httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("FikaLauncher", "1.0"));
-        _httpClient.DefaultRequestHeaders.Accept.Add(
+        base.ConfigureHttpClient();
+        _client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("FikaLauncher", "1.0"));
+        _client.DefaultRequestHeaders.Accept.Add(
             new MediaTypeWithQualityHeaderValue("application/vnd.github.v3+json"));
     }
 
@@ -60,7 +31,7 @@ public class GitHubRepositoryService : BaseRepositoryService
         try
         {
             var url = $"repos/{_owner}/{_repo}/commits?path={filePath}&sha={_branch}&per_page=1";
-            var response = await _httpClient.GetAsync(url);
+            var response = await _client.GetAsync(url);
 
             if (!response.IsSuccessStatusCode)
                 return (null, null);
@@ -93,7 +64,7 @@ public class GitHubRepositoryService : BaseRepositoryService
         var url = $"repos/{_owner}/{_repo}/contents/{filePath}?ref={_branch}";
         try
         {
-            var response = await _httpClient.GetAsync(url);
+            var response = await _client.GetAsync(url);
             return response.IsSuccessStatusCode;
         }
         catch
@@ -107,7 +78,7 @@ public class GitHubRepositoryService : BaseRepositoryService
         try
         {
             var url = $"repos/{_owner}/{_repo}/contents/{path}?ref={_branch}";
-            var response = await _httpClient.GetAsync(url);
+            var response = await _client.GetAsync(url);
 
             if (response.IsSuccessStatusCode)
             {

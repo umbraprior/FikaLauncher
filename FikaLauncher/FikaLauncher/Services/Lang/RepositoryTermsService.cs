@@ -10,25 +10,18 @@ namespace FikaLauncher.Services;
 public static class RepositoryTermsService
 {
     private static readonly IRepositoryService _repository;
-    private const string BaseUrl = "https://raw.githubusercontent.com";
     private const int CommitGracePeriodMinutes = 10;
     
     static RepositoryTermsService()
     {
         var repoInfo = RepositoryConfiguration.GetRepository("FikaLauncherTranslations");
-        _repository = RepositoryServiceFactory.Create(BaseUrl, repoInfo);
-    }
-
-    private static string GetGitHubPath(string relativePath)
-    {
-        return $"{BaseUrl}/{relativePath}";
+        _repository = RepositoryServiceFactory.Create("https://api.github.com", repoInfo);
     }
 
     private static string GetTermsPath(string language, bool isLauncherTerms)
     {
         var fileName = isLauncherTerms ? "launcher-terms.md" : "fika-terms.md";
-        var relativePath = $"Languages/{language}/{fileName}";
-        return GetGitHubPath(relativePath);
+        return $"Languages/{language}/{fileName}";
     }
 
     private static async Task<(string? commitHash, DateTime? commitDate)> GetLatestCommitInfo(string filePath)

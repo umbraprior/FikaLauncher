@@ -23,8 +23,8 @@ public class GiteaRepositoryService : BaseRepositoryService
 
     protected override void ConfigureHttpClient()
     {
-        SetBaseAddress();
-        _httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("FikaLauncher", "1.0"));
+        base.ConfigureHttpClient();
+        _client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("FikaLauncher", "1.0"));
     }
 
     public override async Task<(string? commitHash, DateTime? commitDate)> GetLatestCommitInfo(string filePath)
@@ -32,7 +32,7 @@ public class GiteaRepositoryService : BaseRepositoryService
         try
         {
             var url = $"repos/{_owner}/{_repo}/commits?path={filePath}&sha={_branch}&limit=1";
-            var response = await _httpClient.GetAsync(url);
+            var response = await _client.GetAsync(url);
 
             if (!response.IsSuccessStatusCode)
                 return (null, null);
@@ -65,7 +65,7 @@ public class GiteaRepositoryService : BaseRepositoryService
         var url = $"repos/{_owner}/{_repo}/contents/{filePath}?ref={_branch}";
         try
         {
-            var response = await _httpClient.GetAsync(url);
+            var response = await _client.GetAsync(url);
             return response.IsSuccessStatusCode;
         }
         catch
@@ -79,7 +79,7 @@ public class GiteaRepositoryService : BaseRepositoryService
         try
         {
             var url = $"repos/{_owner}/{_repo}/contents/{path}?ref={_branch}";
-            var response = await _httpClient.GetAsync(url);
+            var response = await _client.GetAsync(url);
 
             if (response.IsSuccessStatusCode)
             {

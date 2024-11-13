@@ -7,10 +7,10 @@ namespace FikaLauncher.Services.Doc;
 
 public abstract class BaseRepositoryService : IRepositoryService
 {
-    protected readonly HttpClient _httpClient;
     protected readonly string _owner;
     protected readonly string _repo;
     protected readonly string _branch;
+    protected readonly HttpClient _client;
 
     public abstract string BaseApiUrl { get; }
     public abstract string RawContentUrl { get; }
@@ -20,11 +20,22 @@ public abstract class BaseRepositoryService : IRepositoryService
         _owner = owner;
         _repo = repo;
         _branch = branch;
-        _httpClient = new HttpClient();
+        _client = new HttpClient();
         ConfigureHttpClient();
     }
 
-    protected abstract void ConfigureHttpClient();
+    protected virtual void ConfigureHttpClient()
+    {
+        if (!string.IsNullOrEmpty(BaseApiUrl))
+        {
+            _client.BaseAddress = new Uri(BaseApiUrl.TrimEnd('/') + "/");
+        }
+    }
+
+    public virtual string GetRawContentUrl(string path)
+    {
+        return $"{RawContentUrl.TrimEnd('/')}/{_owner}/{_repo}/{_branch}/{path.TrimStart('/')}";
+    }
 
     public abstract Task<(string? commitHash, DateTime? commitDate)> GetLatestCommitInfo(string filePath);
 
@@ -39,8 +50,8 @@ public abstract class BaseRepositoryService : IRepositoryService
                 BaseAddress = new Uri(RawContentUrl)
             };
 
-            if (_httpClient.DefaultRequestHeaders.Authorization != null)
-                rawClient.DefaultRequestHeaders.Authorization = _httpClient.DefaultRequestHeaders.Authorization;
+            if (_client.DefaultRequestHeaders.Authorization != null)
+                rawClient.DefaultRequestHeaders.Authorization = _client.DefaultRequestHeaders.Authorization;
 
             var fullPath = $"{_owner}/{_repo}/{_branch}/{filePath}";
             Console.WriteLine($"Downloading from: {RawContentUrl}{fullPath}");
@@ -61,11 +72,6 @@ public abstract class BaseRepositoryService : IRepositoryService
             Console.WriteLine($"Error downloading content: {ex.Message}");
             return null;
         }
-    }
-
-    protected void SetBaseAddress()
-    {
-        _httpClient.BaseAddress = new Uri(BaseApiUrl);
     }
 
     public abstract Task<List<string>?> GetDirectoryContents(string path);

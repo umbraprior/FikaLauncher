@@ -11,7 +11,6 @@ public static class LocaleDiscoveryService
 {
     private static readonly IRepositoryService _repository;
     private static readonly HashSet<string> _availableLocales = new() { "en-US" };
-    private const string BaseUrl = "https://raw.githubusercontent.com";
     private const string LocaleDirectory = "Languages";
     private const int CommitGracePeriodMinutes = 10;
 
@@ -20,12 +19,7 @@ public static class LocaleDiscoveryService
     static LocaleDiscoveryService()
     {
         var repoInfo = RepositoryConfiguration.GetRepository("FikaLauncherTranslations");
-        _repository = RepositoryServiceFactory.Create(BaseUrl, repoInfo);
-    }
-
-    private static string GetGitHubPath(string relativePath)
-    {
-        return $"{BaseUrl}/{relativePath}";
+        _repository = RepositoryServiceFactory.Create("https://api.github.com", repoInfo);
     }
 
     public static async Task DiscoverAvailableLocales()
