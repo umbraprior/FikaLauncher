@@ -36,15 +36,11 @@ public class JsonLocalizer(string languageJsonDirectory = "") : BaseLocalizer
         if (!Directory.Exists(_languageJsonDirectory))
             throw new FileNotFoundException(_languageJsonDirectory);
 
-        // Look for locale directories
         foreach (var dir in Directory.GetDirectories(_languageJsonDirectory))
         {
             var localeName = Path.GetFileName(dir);
             var stringsPath = Path.Combine(dir, "strings.json");
-            if (File.Exists(stringsPath))
-            {
-                _languages.Add(localeName);
-            }
+            if (File.Exists(stringsPath)) _languages.Add(localeName);
         }
 
         if (!_languages.Contains(_language))
@@ -67,10 +63,7 @@ public class JsonLocalizer(string languageJsonDirectory = "") : BaseLocalizer
             .ToList();
 
         Console.WriteLine("Available embedded resources:");
-        foreach (var name in resourceNames)
-        {
-            Console.WriteLine($"  {name}");
-        }
+        foreach (var name in resourceNames) Console.WriteLine($"  {name}");
 
         foreach (var resource in resourceNames)
         {
@@ -94,7 +87,7 @@ public class JsonLocalizer(string languageJsonDirectory = "") : BaseLocalizer
         var resourceLanguage = _language.Replace("-", "_");
         var resourcePath = $"FikaLauncher.Languages.{resourceLanguage}.strings.json";
         Console.WriteLine($"Trying to load resource: {resourcePath}");
-        
+
         using var stream = assembly.GetManifestResourceStream(resourcePath);
         if (stream == null)
         {

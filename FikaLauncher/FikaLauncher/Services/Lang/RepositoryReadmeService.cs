@@ -4,6 +4,9 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using FikaLauncher.Services.Doc;
+using System.Reflection;
+using FikaLauncher.Services.GitHub;
+using FikaLauncher.Services.Lang;
 
 namespace FikaLauncher.Services;
 
@@ -28,17 +31,15 @@ public static class RepositoryReadmeService
 
     private static async Task<(string? commitHash, DateTime? commitDate)> GetLatestCommitInfo(string filePath)
     {
+        var endpoint = $"readme/{filePath}";
+
         try
         {
-            var result = await _repository.GetLatestCommitInfo(filePath);
-            if (result.commitHash == null && result.commitDate == null) NotificationController.ShowGitHubRateLimited();
-            return result;
+            return await _repository.GetLatestCommitInfo(filePath).WithRateLimiting(endpoint);
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error getting commit info: {ex.Message}");
-            if (ex.Message.Contains("rate limit", StringComparison.OrdinalIgnoreCase))
-                NotificationController.ShowGitHubRateLimited();
             return (null, null);
         }
     }
@@ -115,51 +116,103 @@ public static class RepositoryReadmeService
         }
     }
 
-    public static async Task<string> GetReadmeContentAsync()
+    private static string? GetEmbeddedReadme(string language)
     {
-        var currentLanguage = LocalizationService.Instance.CurrentLanguage;
-        Console.WriteLine($"Getting readme for language: {currentLanguage}");
-
         try
         {
-            if (currentLanguage != "en-US" && !await DoesLanguageReadmeExist(currentLanguage))
+            var assembly = typeof(RepositoryReadmeService).Assembly;
+            var resourceLanguage = language.Replace("-", "_");
+            var resourcePath = $"FikaLauncher.Languages.{resourceLanguage}.README.md";
+
+            using var stream = assembly.GetManifestResourceStream(resourcePath);
+            if (stream == null)
             {
-                Console.WriteLine($"No {currentLanguage} readme exists, using English");
-                return await GetEnglishContent();
+                Console.WriteLine($"No embedded readme found for {language}");
+                return null;
             }
 
-            var filePath = GetGitHubFilePath(currentLanguage);
-            var (latestCommitHash, _) = await GetLatestCommitInfo(filePath);
-            if (latestCommitHash == null)
-                return await GetEnglishContent();
+            using var reader = new StreamReader(stream);
+            var content = reader.ReadToEnd();
+            Console.WriteLine($"Successfully loaded embedded readme for {language}");
+            return content;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading embedded readme: {ex.Message}");
+            return null;
+        }
+    }
 
-            var (cachedContent, cacheInfo) =
-                await ReadmeCacheService.GetCachedReadme(currentLanguage, latestCommitHash);
-            if (cachedContent != null)
-                return cachedContent;
+    public static async Task<string> GetReadmeAsync(string language)
+    {
+        try
+        {
+            if (!GitHubRateLimitService.Instance.IsRateLimited)
+            {
+                var content = await TryGetGitHubReadme(language);
+                if (content != null) return content;
+            }
 
-            var downloadedContent = await DownloadReadmeContent(currentLanguage);
-            return downloadedContent ?? await GetEnglishContent();
+            var fallbackContent = await LanguageFallbackController.GetWithFallback(
+                language,
+                async (lang) => await GetLatestCachedReadme(lang),
+                async (lang) => GetEmbeddedReadme(lang),
+                "readme"
+            );
+
+            return fallbackContent ?? "# Error\nFailed to load documentation.";
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error getting readme content: {ex.Message}");
-            return await GetEnglishContent();
+            if (LanguageFallbackController.ShouldUseFallback(ex))
+            {
+                var fallbackContent = await LanguageFallbackController.GetWithFallback(
+                    language,
+                    async (lang) => await GetLatestCachedReadme(lang),
+                    async (lang) => GetEmbeddedReadme(lang),
+                    "readme"
+                );
+
+                return fallbackContent ?? "# Error\nFailed to load documentation.";
+            }
+
+            return "# Error\nFailed to load documentation.";
         }
     }
 
-    private static async Task<string> GetEnglishContent()
+    private static async Task<string?> GetLatestCachedReadme(string language)
     {
-        var (latestCommitHash, _) = await GetLatestCommitInfo("README.md");
-        if (latestCommitHash == null)
-            return "# Error\nFailed to load documentation from GitHub.";
+        try
+        {
+            var cacheDir = FileSystemService.CacheDirectory;
+            var readmePrefix = $"readme-{language}-";
+            var files = Directory.GetFiles(cacheDir, $"{readmePrefix}*.md");
 
-        var (cachedContent, _) = await ReadmeCacheService.GetCachedReadme("en-US", latestCommitHash);
-        if (cachedContent != null)
-            return cachedContent;
+            var latestDate = DateTime.MinValue;
+            string? latestContent = null;
 
-        var downloadedContent = await DownloadReadmeContent("en-US");
-        return downloadedContent ?? "# Error\nFailed to load documentation from GitHub.";
+            foreach (var file in files)
+            {
+                var info = await ReadmeCacheService.ReadCacheInfo(file);
+                if (info != null && info.CommitDate > latestDate)
+                {
+                    var content = await ReadmeCacheService.ReadFromCache(file);
+                    if (content != null)
+                    {
+                        latestDate = info.CommitDate;
+                        latestContent = content;
+                    }
+                }
+            }
+
+            return latestContent;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error getting latest cached readme: {ex.Message}");
+            return null;
+        }
     }
 
     public static async Task PreCacheReadmeAsync(string language)
@@ -191,6 +244,34 @@ public static class RepositoryReadmeService
         catch (Exception ex)
         {
             Console.WriteLine($"Error in PreCacheReadmeAsync: {ex.Message}");
+        }
+    }
+
+    private static async Task<string?> TryGetGitHubReadme(string language)
+    {
+        try
+        {
+            var filePath = GetGitHubFilePath(language);
+            var endpoint = $"readme/{filePath}";
+
+            var (latestCommitHash, commitDate) = await _repository.GetLatestCommitInfo(filePath)
+                .WithRateLimiting(endpoint);
+
+            if (latestCommitHash == null || !commitDate.HasValue) return null;
+
+            var (cachedContent, cacheInfo) = await ReadmeCacheService.GetCachedReadme(language, latestCommitHash);
+            if (cachedContent != null && cacheInfo != null) return cachedContent;
+
+            var content = await _repository.DownloadContent(filePath);
+            if (content == null) return null;
+
+            await ReadmeCacheService.SaveToCache(content, language, latestCommitHash, commitDate.Value);
+            return content;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error getting GitHub readme: {ex.Message}");
+            return null;
         }
     }
 }

@@ -8,6 +8,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using System.Threading.Tasks;
 using FikaLauncher.Services;
 using System.Linq;
+using FikaLauncher.Localization;
 
 namespace FikaLauncher.ViewModels;
 
@@ -39,7 +40,7 @@ public partial class AboutViewModel : ViewModelBase
         {
             Console.WriteLine("Starting LoadReadme");
 
-            var markdown = await RepositoryReadmeService.GetReadmeContentAsync();
+            var markdown = await RepositoryReadmeService.GetReadmeAsync(LocalizationService.Instance.CurrentLanguage);
 
             Console.WriteLine("Markdown content loaded from cache or GitHub");
 

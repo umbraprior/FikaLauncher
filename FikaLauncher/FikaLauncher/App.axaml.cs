@@ -12,6 +12,7 @@ using System;
 using System.Threading.Tasks;
 using FikaLauncher.ViewModels.Dialogs;
 using FikaLauncher.Views.Dialogs;
+using FikaLauncher.Services.GitHub;
 
 namespace FikaLauncher;
 
@@ -35,11 +36,9 @@ public partial class App : Application
 
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
-                BindingPlugins.DataValidators.RemoveAt(0);
-                desktop.MainWindow = new MainWindow
-                {
-                    DataContext = new MainViewModel()
-                };
+                GitHubRateLimitService.Instance.Initialize();
+                var mainViewModel = new MainViewModel();
+                desktop.MainWindow = new MainWindow(mainViewModel);
 
                 ApplicationStateService.LoadState();
                 var state = ApplicationStateService.GetCurrentState();

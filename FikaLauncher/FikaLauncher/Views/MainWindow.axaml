@@ -8,5 +8,13 @@
         Icon="/Assets/avalonia-logo.ico"
         Title="FikaLauncher"
         WindowStartupLocation="CenterScreen">
-    <views:MainView />
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <DockPanel Grid.Row="0" LastChildFill="True">
+            <views:MainView />
+        </DockPanel>
+    </Grid>
 </Window>

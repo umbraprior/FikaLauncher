@@ -32,13 +32,10 @@ public static class LocaleDiscoveryService
             foreach (var dir in directories)
             {
                 var locale = Path.GetFileName(dir);
-                if (locale != "en-US") // Skip English as it's embedded
+                if (locale != "en-US")
                 {
                     var hasRequiredFiles = await ValidateLocaleDirectory(locale);
-                    if (hasRequiredFiles)
-                    {
-                        _availableLocales.Add(locale);
-                    }
+                    if (hasRequiredFiles) _availableLocales.Add(locale);
                 }
             }
         }
@@ -50,26 +47,25 @@ public static class LocaleDiscoveryService
 
     private static async Task<bool> ValidateLocaleDirectory(string locale)
     {
-        var requiredFiles = new[]
+        var requiredFiles = new List<string>
         {
-            $"{LocaleDirectory}/{locale}/strings.json",
             $"{LocaleDirectory}/{locale}/launcher-terms.md",
             $"{LocaleDirectory}/{locale}/fika-terms.md"
         };
 
+        if (locale != "en-US") requiredFiles.Add($"{LocaleDirectory}/{locale}/strings.json");
+
         foreach (var file in requiredFiles)
-        {
             if (!await _repository.DoesFileExist(file))
                 return false;
-        }
 
         return true;
     }
 
     public static async Task PreCacheLocaleAsync(string language)
     {
-        if (language == "en-US") return; // Skip precaching for English
-        
+        if (language == "en-US") return;
+
         try
         {
             var filePath = $"{LocaleDirectory}/{language}/strings.json";
@@ -79,7 +75,8 @@ public static class LocaleDiscoveryService
 
             if (DateTime.UtcNow - commitDate.Value < TimeSpan.FromMinutes(CommitGracePeriodMinutes))
             {
-                Console.WriteLine($"Skipping cache update for {language} - commit is too recent ({commitDate.Value:HH:mm:ss UTC})");
+                Console.WriteLine(
+                    $"Skipping cache update for {language} - commit is too recent ({commitDate.Value:HH:mm:ss UTC})");
                 return;
             }
 

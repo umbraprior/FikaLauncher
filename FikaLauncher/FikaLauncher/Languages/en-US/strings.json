@@ -36,6 +36,15 @@
   "Success": "Success!",
   "Warning": "Warning!",
   "Info": "Info",
+  "AboutError": "Failed to load documentation from Github",
+  "GitHubRateLimit": "GitHub Rate Limit",
+  "GitHubRateLimitMessage": "You have been rate limited by GitHub. Please try again later.",
+  "GitHubNetworkError": "GitHub Network Error",
+  "GitHubNetworkErrorMessage": "Unable to connect to GitHub. Please check your internet connection.",
+  "GitHubError": "GitHub Error",
+  "GitHubErrorMessage": "Error during {0}: {1}",
+  "RateLimit": "Rate limit reached!",
+  "GitHubRateLimitUntil": "GitHub downloads are temporarily paused. They will be available again at {0}",
   "UserExists": "Username already exists!",
   "InvalidCredentials": "Invalid username or password!",
   "UsernameRequired": "Username is required!",
@@ -107,6 +116,7 @@
   "RandomGreeting16": "I added an extra mine on Streets just for you, {0}",
   "RandomGreeting17": "{0}, don't forget pain killers again",
   "RandomGreeting18": "{0}, cousin! Let's go bowling!",
-  "AboutError": "Failed to load documentation from Github"
+  "RandomGreeting19": "{0}",
+  "RandomGreeting20": "{0}"
 }
 

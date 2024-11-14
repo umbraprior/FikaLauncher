@@ -12,6 +12,14 @@
 
             <TextBlock Text="{l:Localize Install}" />
 
+            <StackPanel Spacing="10" Margin="20">
+                <Button
+                    Classes="accent"
+                    Command="{Binding TestRateLimitCommand}"
+                    Content="Test Rate Limit"
+                    HorizontalAlignment="Left" />
+            </StackPanel>
+
         </StackPanel>
     </Grid>
 </UserControl>

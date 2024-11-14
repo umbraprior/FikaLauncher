@@ -4,6 +4,8 @@ using System;
 using System.Threading.Tasks;
 using FikaLauncher.Services.Doc;
 using System.IO;
+using FikaLauncher.Services.GitHub;
+using FikaLauncher.Services.Lang;
 
 namespace FikaLauncher.Services;
 
@@ -11,7 +13,7 @@ public static class RepositoryTermsService
 {
     private static readonly IRepositoryService _repository;
     private const int CommitGracePeriodMinutes = 10;
-    
+
     static RepositoryTermsService()
     {
         var repoInfo = RepositoryConfiguration.GetRepository("FikaLauncherTranslations");
@@ -26,17 +28,15 @@ public static class RepositoryTermsService
 
     private static async Task<(string? commitHash, DateTime? commitDate)> GetLatestCommitInfo(string filePath)
     {
+        var endpoint = $"terms/{filePath}";
+
         try
         {
-            var result = await _repository.GetLatestCommitInfo(filePath);
-            if (result.commitHash == null && result.commitDate == null) NotificationController.ShowGitHubRateLimited();
-            return result;
+            return await _repository.GetLatestCommitInfo(filePath).WithRateLimiting(endpoint);
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error getting commit info: {ex.Message}");
-            if (ex.Message.Contains("rate limit", StringComparison.OrdinalIgnoreCase))
-                NotificationController.ShowGitHubRateLimited();
             return (null, null);
         }
     }
@@ -105,66 +105,89 @@ public static class RepositoryTermsService
     {
         try
         {
-            try
+            if (!GitHubRateLimitService.Instance.IsRateLimited)
             {
-                if (language != "en-US" && !await DoesLanguageTermsExist(language, isLauncherTerms))
-                {
-                    Console.WriteLine($"No terms exist for {language}, using English");
-                    return await GetEnglishTerms(isLauncherTerms);
-                }
-
-                var filePath = GetTermsPath(language, isLauncherTerms);
-                var (latestCommitHash, commitDate) = await GetLatestCommitInfo(filePath);
-                if (latestCommitHash != null)
-                {
-                    var (cachedContent, cacheInfo) =
-                        await TermsCacheService.GetCachedTerms(language, latestCommitHash, isLauncherTerms);
-                    if (cachedContent != null) return await ProcessTermsContent(cachedContent, isDark);
-                    
-                    var downloadedContent = await DownloadTermsContent(language, isLauncherTerms);
-                    if (downloadedContent != null) return await ProcessTermsContent(downloadedContent, isDark);
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Failed to load terms from repository: {ex.Message}");
-            }
-            
-            var embeddedContent = GetEmbeddedTerms(language, isLauncherTerms);
-            if (embeddedContent != null)
-            {
-                Console.WriteLine($"Successfully loaded embedded terms for {language}");
-                return await ProcessTermsContent(embeddedContent, isDark);
-            }
-            
-            if (language != "en-US")
-            {
-                Console.WriteLine("Falling back to embedded English terms");
-                embeddedContent = GetEmbeddedTerms("en-US", isLauncherTerms);
-                if (embeddedContent != null) return await ProcessTermsContent(embeddedContent, isDark);
+                var content = await TryGetGitHubTerms(language, isLauncherTerms);
+                if (content != null) return await ProcessTermsContent(content, isDark);
             }
 
-            return "Error loading terms of use.";
+            var fallbackContent = await LanguageFallbackController.GetWithFallback(
+                language,
+                async (lang) => await GetLatestCachedTerms(lang, isLauncherTerms),
+                async (lang) => GetEmbeddedTerms(lang, isLauncherTerms),
+                isLauncherTerms ? "launcher-terms" : "fika-terms"
+            );
+
+            return fallbackContent != null
+                ? await ProcessTermsContent(fallbackContent, isDark)
+                : "Error loading terms of use.";
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error getting terms content: {ex.Message}");
+            if (LanguageFallbackController.ShouldUseFallback(ex))
+            {
+                var fallbackContent = await LanguageFallbackController.GetWithFallback(
+                    language,
+                    async (lang) => await GetLatestCachedTerms(lang, isLauncherTerms),
+                    async (lang) => GetEmbeddedTerms(lang, isLauncherTerms),
+                    isLauncherTerms ? "launcher-terms" : "fika-terms"
+                );
+
+                return fallbackContent != null
+                    ? await ProcessTermsContent(fallbackContent, isDark)
+                    : "Error loading terms of use.";
+            }
+
             return "Error loading terms of use.";
         }
     }
 
-    private static async Task<string> GetEnglishTerms(bool isLauncherTerms)
+    private static async Task<string?> GetLatestCachedTerms(string language, bool isLauncherTerms)
     {
-        var filePath = GetTermsPath("en-US", isLauncherTerms);
+        try
+        {
+            var cacheDir = FileSystemService.CacheDirectory;
+            var termsPrefix = $"terms-{language}-{(isLauncherTerms ? "launcher" : "fika")}-";
+            var files = Directory.GetFiles(cacheDir, $"{termsPrefix}*.md");
+
+            var latestDate = DateTime.MinValue;
+            string? latestContent = null;
+
+            foreach (var file in files)
+            {
+                var info = await TermsCacheService.ReadCacheInfo(file);
+                if (info != null && info.CommitDate > latestDate)
+                {
+                    var content = await TermsCacheService.ReadFromCache(file);
+                    if (content != null)
+                    {
+                        latestDate = info.CommitDate;
+                        latestContent = content;
+                    }
+                }
+            }
+
+            return latestContent;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error getting latest cached terms: {ex.Message}");
+            return null;
+        }
+    }
+
+    private static async Task<string> TryGetGitHubTerms(string language, bool isLauncherTerms)
+    {
+        var filePath = GetTermsPath(language, isLauncherTerms);
         var (latestCommitHash, _) = await GetLatestCommitInfo(filePath);
         if (latestCommitHash == null)
             return "Error loading terms of use.";
 
-        var (cachedContent, _) = await TermsCacheService.GetCachedTerms("en-US", latestCommitHash, isLauncherTerms);
-        if (cachedContent != null)
-            return cachedContent;
+        var (cachedContent, _) = await TermsCacheService.GetCachedTerms(language, latestCommitHash, isLauncherTerms);
+        if (cachedContent != null) return cachedContent;
 
-        var downloadedContent = await DownloadTermsContent("en-US", isLauncherTerms);
+        var downloadedContent = await DownloadTermsContent(language, isLauncherTerms);
         return downloadedContent ?? "Error loading terms of use.";
     }
 
@@ -377,21 +400,14 @@ public static class RepositoryTermsService
         }
     }
 
-    public static async Task<string> GetProcessedTerms(bool isDark, bool isLauncherTerms)
+    public static async Task<string> GetProcessedTerms(bool isDark, bool isLauncherTerms, bool skipCacheCheck = false)
     {
-        var currentLanguage = LocalizationService.Instance.CurrentLanguage;
-        Console.WriteLine($"Getting terms for language: {currentLanguage}");
-
         try
         {
-            try
-            {
-                if (currentLanguage != "en-US" && !await DoesLanguageTermsExist(currentLanguage, isLauncherTerms))
-                {
-                    Console.WriteLine($"No {currentLanguage} terms exist in repository, using English");
-                    currentLanguage = "en-US";
-                }
+            var currentLanguage = LocalizationService.Instance.CurrentLanguage;
 
+            if (!skipCacheCheck)
+            {
                 var filePath = GetTermsPath(currentLanguage, isLauncherTerms);
                 var (latestCommitHash, commitDate) = await GetLatestCommitInfo(filePath);
                 if (latestCommitHash != null)
@@ -399,35 +415,25 @@ public static class RepositoryTermsService
                     var (cachedContent, cacheInfo) =
                         await TermsCacheService.GetCachedTerms(currentLanguage, latestCommitHash, isLauncherTerms);
                     if (cachedContent != null) return await ProcessTermsContent(cachedContent, isDark);
-                    
+
                     var downloadedContent = await DownloadTermsContent(currentLanguage, isLauncherTerms);
                     if (downloadedContent != null) return await ProcessTermsContent(downloadedContent, isDark);
                 }
             }
-            catch (Exception ex)
+            else
             {
-                Console.WriteLine($"Failed to load terms from repository: {ex.Message}");
-            }
-            
-            var embeddedContent = GetEmbeddedTerms(currentLanguage, isLauncherTerms);
-            if (embeddedContent != null)
-            {
-                Console.WriteLine($"Successfully loaded embedded terms for {currentLanguage}");
-                return await ProcessTermsContent(embeddedContent, isDark);
-            }
-            
-            if (currentLanguage != "en-US")
-            {
-                Console.WriteLine("Falling back to embedded English terms");
-                embeddedContent = GetEmbeddedTerms("en-US", isLauncherTerms);
+                var embeddedContent = GetEmbeddedTerms(currentLanguage, isLauncherTerms);
                 if (embeddedContent != null) return await ProcessTermsContent(embeddedContent, isDark);
             }
 
-            return "Error loading terms of use.";
+            var fallbackContent = GetEmbeddedTerms("en-US", isLauncherTerms);
+            return fallbackContent != null
+                ? await ProcessTermsContent(fallbackContent, isDark)
+                : "Error loading terms of use.";
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error getting terms content: {ex.Message}");
+            Console.WriteLine($"Failed to get processed terms: {ex.Message}");
             return "Error loading terms of use.";
         }
     }
@@ -438,7 +444,7 @@ public static class RepositoryTermsService
         {
             var assembly = typeof(RepositoryTermsService).Assembly;
             var fileName = isLauncherTerms ? "launcher-terms.md" : "fika-terms.md";
-            
+
             var resourceLanguage = language.Replace("-", "_");
             var resourcePath = $"FikaLauncher.Languages.{resourceLanguage}.{fileName}";
 

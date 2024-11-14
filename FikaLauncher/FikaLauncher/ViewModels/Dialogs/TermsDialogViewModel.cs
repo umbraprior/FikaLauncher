@@ -14,6 +14,7 @@ using System.Linq;
 using System.ComponentModel;
 using System.Threading.Tasks;
 using Avalonia.Threading;
+using Avalonia.Styling;
 
 namespace FikaLauncher.ViewModels.Dialogs;
 
@@ -71,27 +72,39 @@ public partial class TermsDialogViewModel : ViewModelBase
         LocalizationService.Instance.PropertyChanged += OnLanguageServiceChanged;
     }
 
-    private async Task LoadTerms()
+    private async Task LoadTerms(bool resetScroll = true, bool preserveReadState = false)
     {
         try
         {
-            var isDark = App.Current?.RequestedThemeVariant == Avalonia.Styling.ThemeVariant.Dark;
+            var isDark = false;
+            if (App.Current != null) isDark = App.Current.RequestedThemeVariant == ThemeVariant.Dark;
 
-            // First ensure terms are cached
-            await RepositoryTermsService.PreCacheTermsAsync(LocalizationService.Instance.CurrentLanguage,
-                IsLauncherTerms);
+            if (!preserveReadState)
+                await RepositoryTermsService.PreCacheTermsAsync(LocalizationService.Instance.CurrentLanguage,
+                    IsLauncherTerms);
 
-            // Then get the processed terms
-            var terms = await RepositoryTermsService.GetProcessedTerms(isDark, IsLauncherTerms);
+            var terms = await RepositoryTermsService.GetProcessedTerms(isDark, IsLauncherTerms, preserveReadState);
 
             await Dispatcher.UIThread.InvokeAsync(() =>
             {
+                var previousReadState = HasReadTerms;
+                var previousAcceptedState = HasAcceptedCurrentTerms;
+
                 TermsHtml = terms;
                 ForceReload = !ForceReload;
-                HasReadTerms = false;
-                HasAcceptedCurrentTerms = false;
 
-                if (App.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+                if (!preserveReadState)
+                {
+                    HasReadTerms = false;
+                    HasAcceptedCurrentTerms = false;
+                }
+                else
+                {
+                    HasReadTerms = previousReadState;
+                    HasAcceptedCurrentTerms = previousAcceptedState;
+                }
+
+                if (resetScroll && App.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
                 {
                     var mainWindow = desktop.MainWindow;
                     var dialog = mainWindow?.GetVisualDescendants()
@@ -143,7 +156,7 @@ public partial class TermsDialogViewModel : ViewModelBase
 
     private void UpdateThemeIcon()
     {
-        var isDark = App.Current?.RequestedThemeVariant == Avalonia.Styling.ThemeVariant.Dark;
+        var isDark = App.Current?.RequestedThemeVariant == ThemeVariant.Dark;
         ThemeIcon = isDark
             ? Material.Icons.MaterialIconKind.WeatherNight
             : Material.Icons.MaterialIconKind.WeatherSunny;
@@ -151,20 +164,37 @@ public partial class TermsDialogViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private async void ToggleTheme()
+    private async Task ToggleTheme()
     {
-        var isDark = App.Current?.RequestedThemeVariant != Avalonia.Styling.ThemeVariant.Dark;
-        ConfigurationService.Settings.IsDarkTheme = isDark;
-        ConfigurationService.SaveSettings();
-        App.ChangeTheme(isDark);
+        var app = Application.Current;
+        if (app == null) return;
 
-        if (App.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-            if (desktop.MainWindow?.DataContext is MainViewModel mainViewModel)
-                mainViewModel.UpdateLogo(isDark);
+        var isDark = app.ActualThemeVariant == ThemeVariant.Dark;
 
-        await Task.Run(LoadTerms);
+        ConfigurationService.Settings.IsDarkTheme = !isDark;
+        App.ChangeTheme(!isDark);
+
         UpdateThemeIcon();
-        NotificationController.ShowThemeChanged(isDark);
+
+        if (app.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+            if (desktop.MainWindow?.DataContext is MainViewModel mainViewModel)
+                mainViewModel.UpdateLogo(!isDark);
+
+        await LoadTerms(false, true);
+
+        await Task.Run(async () =>
+        {
+            try
+            {
+                await ConfigurationService.SaveSettingsAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error saving settings: {ex.Message}");
+            }
+        });
+
+        NotificationController.ShowThemeChanged(!isDark);
     }
 
     [RelayCommand]

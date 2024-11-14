@@ -12,6 +12,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using FikaLauncher.Views;
 using FikaLauncher.Services;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace FikaLauncher.ViewModels;
 
@@ -25,6 +26,9 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty] private double _logoWidth = 60;
     [ObservableProperty] private double _logoHeight = 60;
     [ObservableProperty] private int _closeAction = 0;
+
+    private INotificationManager? _notificationManager;
+    private readonly Dictionary<string, INotification> _persistentNotifications = new();
 
     partial void OnLogoSourceChanged(string value)
     {
@@ -120,10 +124,49 @@ public partial class MainViewModel : ViewModelBase
         }
     }
 
+    public void InitializeNotifications(INotificationManager notificationManager)
+    {
+        Console.WriteLine("Initializing notification manager");
+        _notificationManager = notificationManager;
+    }
+
     public void ShowNotification(string title, string message, NotificationType type)
     {
-        if (App.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-            if (desktop.MainWindow is MainWindow mainWindow)
-                mainWindow.NotificationManager?.Show(new Notification(title, message, type));
+        if (_notificationManager == null)
+        {
+            Console.WriteLine("NotificationManager is null!");
+            return;
+        }
+
+        Console.WriteLine($"Showing notification through manager: {title}");
+        _notificationManager.Show(new Notification(title, message, type));
+    }
+
+    public void ShowPersistentNotification(string title, string message, NotificationType type, string key)
+    {
+        if (_notificationManager == null) return;
+
+        if (_persistentNotifications.ContainsKey(key)) return;
+
+        var notification = new Notification(title, message, type, TimeSpan.FromMilliseconds(-1));
+        _notificationManager.Show(notification);
+        _persistentNotifications[key] = notification;
+    }
+
+    public void UpdatePersistentNotification(string key, string newMessage, string? newTitle = null)
+    {
+        if (_notificationManager == null) return;
+
+        if (_persistentNotifications.TryGetValue(key, out var existingNotification))
+            if (existingNotification is Notification notification)
+            {
+                notification.Message = newMessage;
+                if (newTitle != null) notification.Title = newTitle;
+            }
+    }
+
+    public void RemoveNotification(string key)
+    {
+        if (_persistentNotifications.ContainsKey(key)) _persistentNotifications.Remove(key);
     }
 }

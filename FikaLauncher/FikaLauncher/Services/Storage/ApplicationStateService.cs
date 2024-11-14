@@ -6,6 +6,8 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using FikaLauncher.Services;
 using FikaLauncher.Localization;
+using System.Text.Json.Serialization;
+using System.Globalization;
 
 public static class ApplicationStateService
 {
@@ -13,10 +15,15 @@ public static class ApplicationStateService
 
     private static readonly JsonSerializerOptions _jsonOptions = new()
     {
-        WriteIndented = true
+        WriteIndented = true,
+        PropertyNameCaseInsensitive = true,
+        Converters =
+        {
+            new JsonStringDateTimeConverter()
+        }
     };
 
-    private static AppState _currentState = new();
+    private static AppState? _currentState;
 
     public class AppState
     {
@@ -31,6 +38,7 @@ public static class ApplicationStateService
         public string LastServerPort { get; set; } = "6969";
         public bool HasAcceptedLauncherTerms { get; set; }
         public bool HasAcceptedFikaTerms { get; set; }
+        public DateTime RateLimitResetTime { get; set; } = DateTime.MinValue;
     }
 
     public static (string prefix, string suffix) GetOrUpdateGreeting(string username)
@@ -53,7 +61,7 @@ public static class ApplicationStateService
         {
             var validGreetings = new List<string>();
 
-            for (var i = 1; i <= 18; i++)
+            for (var i = 1; i <= 20; i++)
             {
                 var key = $"RandomGreeting{i}";
                 var value = Localizer.Get(key);
@@ -90,17 +98,20 @@ public static class ApplicationStateService
     {
         try
         {
-            Directory.CreateDirectory(FileSystemService.CacheDirectory);
-
             if (File.Exists(StateFilePath))
             {
-                var json = File.ReadAllText(StateFilePath);
-                _currentState = JsonSerializer.Deserialize<AppState>(json, _jsonOptions) ?? new AppState();
+                var rawJson = File.ReadAllText(StateFilePath);
+                var loadedState = JsonSerializer.Deserialize<AppState>(rawJson, _jsonOptions);
+                if (loadedState != null) _currentState = loadedState;
+            }
+            else
+            {
+                _currentState = new AppState();
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Failed to load application state: {ex.Message}");
+            Console.WriteLine($"Error in LoadState: {ex}");
             _currentState = new AppState();
         }
     }
@@ -109,14 +120,14 @@ public static class ApplicationStateService
     {
         try
         {
-            Directory.CreateDirectory(FileSystemService.CacheDirectory);
+            if (_currentState == null) _currentState = new AppState();
 
             var json = JsonSerializer.Serialize(_currentState, _jsonOptions);
             File.WriteAllText(StateFilePath, json);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Failed to save application state: {ex.Message}");
+            Console.WriteLine($"Error saving state: {ex}");
         }
     }
 
@@ -136,15 +147,19 @@ public static class ApplicationStateService
     public static async Task LoadLoginState()
     {
         LoadState();
+        var state = GetCurrentState();
+        var savedResetTime = state.RateLimitResetTime;
 
-        if (_currentState.KeepLoggedIn &&
-            _currentState.IsLoggedIn &&
-            !string.IsNullOrEmpty(_currentState.Username) &&
-            ConfigurationService.Settings.KeepLauncherOpen)
-            if (await AuthService.ValidateAndRestoreLogin(_currentState.Username, _currentState.SecurityToken))
-                return;
+        if (!state.KeepLoggedIn || string.IsNullOrEmpty(state.SecurityToken))
+        {
+            ClearLoginState(true);
+            return;
+        }
 
-        var lastUsername = _currentState.LastLoggedInUsername;
+        if (await AuthService.ValidateAndRestoreLogin(state.Username, state.SecurityToken))
+            return;
+
+        var lastUsername = state.LastLoggedInUsername;
         ClearLoginState();
         _currentState.LastLoggedInUsername = lastUsername;
         SaveState();
@@ -161,18 +176,19 @@ public static class ApplicationStateService
         SaveState();
     }
 
-    public static void ClearLoginState()
+    public static void ClearLoginState(bool preserveRateLimit = false)
     {
-        var lastUsername = _currentState.LastLoggedInUsername;
-        var hasAcceptedLauncherTerms = _currentState.HasAcceptedLauncherTerms;
-        var hasAcceptedFikaTerms = _currentState.HasAcceptedFikaTerms;
+        var oldState = _currentState ?? new AppState();
 
         _currentState = new AppState
         {
-            LastLoggedInUsername = lastUsername,
-            HasAcceptedLauncherTerms = hasAcceptedLauncherTerms,
-            HasAcceptedFikaTerms = hasAcceptedFikaTerms
+            RateLimitResetTime = oldState.RateLimitResetTime,
+            HasAcceptedLauncherTerms = oldState.HasAcceptedLauncherTerms,
+            HasAcceptedFikaTerms = oldState.HasAcceptedFikaTerms,
+            LastServerAddress = oldState.LastServerAddress,
+            LastServerPort = oldState.LastServerPort
         };
+
         SaveState();
     }
 
@@ -184,6 +200,29 @@ public static class ApplicationStateService
 
     public static AppState GetCurrentState()
     {
-        return _currentState;
+        if (_currentState == null) LoadState();
+        return _currentState ?? new AppState();
+    }
+
+    public static void Initialize()
+    {
+        if (!File.Exists(StateFilePath))
+            SaveState();
+        else
+            LoadState();
+    }
+}
+
+public class JsonStringDateTimeConverter : JsonConverter<DateTime>
+{
+    public override DateTime Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        var dateString = reader.GetString();
+        return dateString != null ? DateTime.Parse(dateString, null, DateTimeStyles.RoundtripKind) : DateTime.MinValue;
+    }
+
+    public override void Write(Utf8JsonWriter writer, DateTime value, JsonSerializerOptions options)
+    {
+        writer.WriteStringValue(value.ToString("O"));
     }
 }

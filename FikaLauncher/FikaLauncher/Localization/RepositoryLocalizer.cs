@@ -57,10 +57,7 @@ public class RepositoryLocalizer : BaseLocalizer
 
     private async Task LoadLanguageStrings(string language)
     {
-        if (string.IsNullOrEmpty(language))
-        {
-            language = DefaultLanguage;
-        }
+        if (string.IsNullOrEmpty(language)) language = DefaultLanguage;
 
         lock (_loadLock)
         {
@@ -71,6 +68,14 @@ public class RepositoryLocalizer : BaseLocalizer
 
         try
         {
+            if (language == "en-US")
+            {
+                _fallbackLocalizer.Language = language;
+                _languageStrings = GetFallbackStrings(language);
+                Console.WriteLine($"Successfully loaded embedded strings for English");
+                return;
+            }
+
             try
             {
                 var (strings, _) = await RepositoryLocaleService.GetLocaleStringsWithInfo(language);
@@ -84,7 +89,7 @@ public class RepositoryLocalizer : BaseLocalizer
             {
                 Console.WriteLine($"Failed to load from repository: {ex.Message}");
             }
-            
+
             try
             {
                 var cacheFiles = Directory.GetFiles(
@@ -111,11 +116,10 @@ public class RepositoryLocalizer : BaseLocalizer
             {
                 Console.WriteLine($"Failed to load from cache: {ex.Message}");
             }
-            
+
             try
             {
                 if (!_fallbackLocalizer.Languages.Contains(language))
-                {
                     if (language != DefaultLanguage)
                     {
                         Console.WriteLine($"Language {language} not found in fallback, switching to {DefaultLanguage}");
@@ -123,7 +127,6 @@ public class RepositoryLocalizer : BaseLocalizer
                         await LoadLanguageStrings(DefaultLanguage);
                         return;
                     }
-                }
 
                 _fallbackLocalizer.Language = language;
                 _languageStrings = GetFallbackStrings(language);
@@ -165,6 +168,32 @@ public class RepositoryLocalizer : BaseLocalizer
 
         if (_languageStrings.TryGetValue(key, out var langStr))
             return langStr.Replace("\\n", "\n");
+
+        if (Language != "en-US")
+        {
+            if (_fallbackLocalizer.GetAllKeys().Contains(key))
+            {
+                var englishStr = _fallbackLocalizer.Get(key);
+                if (_languageStrings != null)
+                    _languageStrings[key] = englishStr;
+                return englishStr.Replace("\\n", "\n");
+            }
+
+            try
+            {
+                var englishStrings = GetFallbackStrings("en-US");
+                if (englishStrings.TryGetValue(key, out var repoEnglishStr))
+                {
+                    if (_languageStrings != null)
+                        _languageStrings[key] = repoEnglishStr;
+                    return repoEnglishStr.Replace("\\n", "\n");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to get repository English string: {ex.Message}");
+            }
+        }
 
         return $"{Language}:{key}";
     }
