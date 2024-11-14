@@ -67,6 +67,12 @@ public partial class MainViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private void NavigateServer()
+    {
+        CurrentPage = new ServerViewModel();
+    }
+
+    [RelayCommand]
     private void NavigateInstall()
     {
         CurrentPage = new InstallViewModel();

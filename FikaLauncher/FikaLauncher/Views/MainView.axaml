@@ -53,6 +53,17 @@
                                                FontStyle="Normal" FontWeight="Bold" />
                                 </StackPanel>
                             </Button>
+                            <Button Command="{Binding NavigateServerCommand}"
+                                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="15"
+                                    Background="Transparent">
+                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                    <material:MaterialIcon Kind="Server" VerticalAlignment="Center"
+                                                           Width="24" Height="24" />
+                                    <TextBlock Text="{l:Localize Server}" VerticalAlignment="Center"
+                                               IsVisible="{Binding IsPaneOpen}"
+                                               FontStyle="Normal" FontWeight="Bold" />
+                                </StackPanel>
+                            </Button>
                             <Button Command="{Binding NavigateInstallCommand}"
                                     HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="15"
                                     Background="Transparent">
